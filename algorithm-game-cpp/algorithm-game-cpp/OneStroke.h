@@ -4,10 +4,5 @@
 
 using namespace std;
 
-struct MapInfo
-{
-	int** gameMap;
-	std::vector<string> path;
-};
 
-void OneStroke_Main();
+void one_stroke_main();

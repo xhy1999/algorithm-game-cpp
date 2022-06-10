@@ -11,7 +11,6 @@ long long get_time() {
 
 int main() {
     std::cout << get_time() << std::endl;
-    OneStroke_Main();
-    std::cout << "Hello World!\n";
+    one_stroke_main();
 }
 
