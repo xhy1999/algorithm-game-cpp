@@ -10,7 +10,9 @@ long long get_time() {
 }
 
 int main() {
-    std::cout << get_time() << std::endl;
+    long long startTime = get_time();
+    std::cout << to_string(startTime) << std::endl;
     one_stroke_main();
+    std::cout << to_string(get_time() - startTime) << std::endl;
 }
 

@@ -10,7 +10,7 @@ void print_vector(vector<int> v) {
     cout << "---------- print vector<int>" << endl;
     cout << "size:" + to_string(v.size()) << endl;
     for (vector<int>::iterator iter = v.begin(); iter != v.end(); iter++) {
-        cout << to_string((*iter)) + ", ";
+        cout << "\"" + to_string((*iter)) + "\", ";
     }
     cout << endl;
     cout << "----------" << endl;
@@ -20,7 +20,7 @@ void print_vector(vector<string> v) {
     cout << "---------- print vector<string>" << endl;
     cout << "size:" + to_string(v.size()) << endl;
     for (vector<string>::iterator iter = v.begin(); iter != v.end(); iter++) {
-        cout << (*iter) + ", ";
+        cout << "\"" + (*iter) + "\", ";
     }
     cout << endl;
     cout << "----------" << endl;

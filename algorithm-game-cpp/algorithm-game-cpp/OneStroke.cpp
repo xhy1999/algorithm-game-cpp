@@ -57,11 +57,9 @@ int** init_array(int width, int height) {
 
 struct MapInfo
 {
-    bool isNull;
     int** gameMap;
     std::vector<string> path;
     MapInfo operator = (MapInfo& info) {
-        isNull = info.isNull;
         gameMap = copy_array(info.gameMap);
         path = {};
         copy(info.path.begin(), info.path.end(), inserter(path, path.begin()));
@@ -104,11 +102,11 @@ void dfs(int** dfsMap, int** book, int x, int y, int color) {
     }
 }
 
+int sum = 0, num = -10;
 //获取最多可以走到的格子数
 int GetTraversedNum(int** gameMap, int locationX, int locationY) {
     int** dfsMap = copy_array(gameMap);
     int** book = init_array(MAP_WIDTH_LENGTH, MAP_HEIGHT_LENGTH);
-    int sum = 0, num = -10;
     //先染色,计算有几个"岛"
     for (int i = 0; i < MAP_HEIGHT_LENGTH; i++) {
         for (int j = 0; j < MAP_WIDTH_LENGTH; j++) {
@@ -118,7 +116,6 @@ int GetTraversedNum(int** gameMap, int locationX, int locationY) {
                 dfs(dfsMap, book, j, i, num);
             }
         }
-        std::cout << std::endl;
     }
     //print_array(dfsMap);
     //将岛分类
@@ -184,23 +181,23 @@ static volatile atomic_int maxPathTraversed = 0;
 vector<MapInfo> mapInfoList;
 set<string> 算过的路径 = {};
 
-MapInfo GO(MapInfo &mapInfo, int startY, int startX, int deep) {
+void GO(MapInfo &mapInfo, int startY, int startX, int deep) {
     int** oldMap = mapInfo.gameMap;
     int maxCanTraversed = GetTraversedNum(oldMap, startX, startY);
     if (MAP_WIDTH_LENGTH * MAP_HEIGHT_LENGTH - 3 == maxPathTraversed) {
-        return { true, NULL, {} };
+        return;
     }
     //如果当前能到的位置加上,都没有最大值大的话,直接返回
     if (maxPathTraversed >= mapInfo.path.size() + 1 + maxCanTraversed) {
-        return { true, NULL, {} };
+        return;
     }
     string oldMapStr = get_string_array(oldMap) + to_string(startX) + to_string(startY);
     if (算过的路径.find(oldMapStr) != 算过的路径.end()) {
-        return { true, NULL, {} };
+        return;
     }
     算过的路径.insert(oldMapStr);
 
-    MapInfo newMapInfo1 = { true, NULL, {} }, newMapInfo2 = { true, NULL, {} }, newMapInfo3 = { true, NULL, {} }, newMapInfo4 = { true, NULL, {} };
+    MapInfo newMapInfo1 = { NULL, {} }, newMapInfo2 = { NULL, {} }, newMapInfo3 = { NULL, {} }, newMapInfo4 = { NULL, {} };
     bool goNext = false;
     if (canGoNext(oldMap, startY, startX + 1)) {
         int** newMap = copy_array(oldMap);
@@ -242,10 +239,10 @@ MapInfo GO(MapInfo &mapInfo, int startY, int startX, int deep) {
         int max = GetMaxPathTraversed(oldMap);
         if (max > maxPathTraversed) {
             maxPathTraversed = max;
-            mapInfoList.push_back(mapInfo);
+            MapInfo saveMapInfo = mapInfo;
+            mapInfoList.push_back(saveMapInfo);
         }
     }
-    return mapInfo;
 }
 
 void one_stroke_main() {
@@ -257,11 +254,14 @@ void one_stroke_main() {
     mainMap[4] = new int[MAP_WIDTH_LENGTH]{ 1, 0, 0, 0, 1, 0, 0 };
     mainMap[5] = new int[MAP_WIDTH_LENGTH]{ 0, 0, 0, 0, 0, 0, 0 };
     mainMap[6] = new int[MAP_WIDTH_LENGTH]{ -1, 0, 1, 0, 0, 0, 0 };
-    MapInfo mapInfo = { false, mainMap, {} };
+    MapInfo mapInfo = { mainMap, {} };
     print_array(mainMap);
     int startX = 0, startY = 6;
+
     GO(mapInfo, startY, startX, 0);
+
     std::cout << "算过的路径:" + to_string(算过的路径.size()) << std::endl;
     std::cout << "maxPathTraversed:" + to_string(maxPathTraversed) << std::endl;
+    print_vector(mapInfoList[mapInfoList.size() - 1].path);
 }
 
