@@ -4,6 +4,7 @@
 #include <set>
 #include "OneStroke.h"
 #include "PrintUtil.h"
+#include <regex>
 
 #define MAP_WIDTH_LENGTH 7
 #define MAP_HEIGHT_LENGTH 7
@@ -45,11 +46,32 @@ void print_array(int** arr) {
  *  {1,2}}
 */
 int** init_array(int width, int height) {
-    int** arr = new int* [height];
+    int** arr = new int*[height];
     for (int i = 0; i < height; i++) {
         arr[i] = new int[width];
         for (int j = 0; j < width; j++) {
             arr[i][j] = 0;
+        }
+    }
+    return arr;
+}
+void delete_array(int** arr) {
+    for (int i = 0; i < MAP_HEIGHT_LENGTH; ++i) {
+        delete[] arr[i];
+        arr[i] = NULL;
+    }
+    delete[] arr;
+    arr = NULL;
+}
+int* sort_array(int* arr) {
+    int n = sizeof(arr) / sizeof(int) + 1;
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                int t = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = t;
+            }
         }
     }
     return arr;
@@ -152,6 +174,8 @@ int GetTraversedNum(int** gameMap, int locationX, int locationY) {
             }
         }
     }
+    delete_array(dfsMap);
+    delete_array(book);
     return maxCanTraversed;
 }
 
@@ -206,6 +230,7 @@ void GO(MapInfo &mapInfo, int startY, int startX, int deep) {
         newMapInfo1.gameMap = newMap;
         newMapInfo1.path.push_back(to_string(startX + 1) + ", " + to_string(startY));
         GO(newMapInfo1, startY, startX + 1, deep + 1);
+        delete_array(newMap);
         goNext = true;
     }
     if (canGoNext(oldMap, startY + 1, startX)) {
@@ -215,6 +240,7 @@ void GO(MapInfo &mapInfo, int startY, int startX, int deep) {
         newMapInfo2.gameMap = newMap;
         newMapInfo2.path.push_back(to_string(startX) + ", " + to_string(startY + 1));
         GO(newMapInfo2, startY + 1, startX, deep + 1);
+        delete_array(newMap);
         goNext = true;
     }
     if (canGoNext(oldMap, startY, startX - 1)) {
@@ -224,6 +250,7 @@ void GO(MapInfo &mapInfo, int startY, int startX, int deep) {
         newMapInfo3.gameMap = newMap;
         newMapInfo3.path.push_back(to_string(startX - 1) + ", " + to_string(startY));
         GO(newMapInfo3, startY, startX - 1, deep + 1);
+        delete_array(newMap);
         goNext = true;
     }
     if (canGoNext(oldMap, startY - 1, startX)) {
@@ -233,16 +260,28 @@ void GO(MapInfo &mapInfo, int startY, int startX, int deep) {
         newMapInfo4.gameMap = newMap;
         newMapInfo4.path.push_back(to_string(startX) + ", " + to_string(startY - 1));
         GO(newMapInfo4, startY - 1, startX, deep + 1);
+        delete_array(newMap);
+        //cout << newMap << endl;
+        //print_array(newMap);
         goNext = true;
     }
     if (!goNext) {
         int max = GetMaxPathTraversed(oldMap);
+        //delete_array(oldMap);
         if (max > maxPathTraversed) {
             maxPathTraversed = max;
             MapInfo saveMapInfo = mapInfo;
             mapInfoList.push_back(saveMapInfo);
         }
     }
+    mapInfo.path.clear();
+    mapInfo.path.shrink_to_fit();
+    //mapInfo.path.clear();
+    /*{
+        std::vector<string> tmp;
+        mapInfo.path.swap(tmp);
+    }*/
+    //delete_array(mapInfo.gameMap);
 }
 
 void one_stroke_main() {
@@ -254,12 +293,65 @@ void one_stroke_main() {
     mainMap[4] = new int[MAP_WIDTH_LENGTH]{ 1, 0, 0, 0, 1, 0, 0 };
     mainMap[5] = new int[MAP_WIDTH_LENGTH]{ 0, 0, 0, 0, 0, 0, 0 };
     mainMap[6] = new int[MAP_WIDTH_LENGTH]{ -1, 0, 1, 0, 0, 0, 0 };
-    MapInfo mapInfo = { mainMap, {} };
-    print_array(mainMap);
     int startX = 0, startY = 6;
 
-    GO(mapInfo, startY, startX, 0);
+    vector<int**> maps;
+    //记录石头坐标
+    vector<string> stoneLocationList;
+    for (int i = 0; i < MAP_HEIGHT_LENGTH; i++) {
+        for (int j = 0; j < MAP_WIDTH_LENGTH; j++) {
+            if (mainMap[i][j] == 1) {
+                stoneLocationList.push_back(to_string(j) + "," + to_string(i));
+            }
+        }
+    }
 
+    //排列组合,取三个
+    set<int> intSet;
+    int debugNum = 0;
+    for (int x = 0; x < stoneLocationList.size(); x++) {
+        for (int y = 0; y < stoneLocationList.size(); y++) {
+            for (int z = 0; z < stoneLocationList.size(); z++) {
+                if (x == y || x == z || y == z) {
+                    continue;
+                }
+                int* arr = sort_array(new int[]{x, y, z });
+                int no = arr[0] * 100 + arr[1] * 10 + arr[2];
+                if (intSet.find(no) == intSet.end()) {
+                    debugNum++;
+                    intSet.insert(no);
+                    int** newMap = copy_array(mainMap);
+                    string stone1 = stoneLocationList[x];
+                    string stone2 = stoneLocationList[y];
+                    string stone3 = stoneLocationList[z];
+                    regex ws_re(",");
+                    int noX = atoi(stone1.substr(0, 1).c_str());
+                    int noY = atoi(stone1.substr(2, 1).c_str());
+                    newMap[noY][noX] = 0;
+                    noX = atoi(stone2.substr(0, 1).c_str());
+                    noY = atoi(stone2.substr(2, 1).c_str());
+                    newMap[noY][noX] = 0;
+                    noX = atoi(stone3.substr(0, 1).c_str());
+                    noY = atoi(stone3.substr(2, 1).c_str());
+                    newMap[noY][noX] = 0;
+                    maps.push_back(newMap);
+                }
+            }
+        }
+    }
+    cout << "数量:" + to_string(maps.size()) << endl;
+    for (int i = 0; i < maps.size(); i++) {
+        MapInfo mapInfo = { maps[i], vector<string>() };
+        print_array(mapInfo.gameMap);
+        GO(mapInfo, startY, startX, 0);
+        cout << "完成:" + to_string(i) + ", 最大面积:" + to_string(mapInfoList[mapInfoList.size() - 1].path.size()) << endl;
+        /*if (i == 65) {
+            cout << "算过的路径:" + to_string(算过的路径.size() * 4) << endl;
+            cout << "mapInfoList:" + to_string(mapInfoList.size()) << endl;
+            system("PAUSE");
+            exit(0);
+        }*/
+    }
     std::cout << "算过的路径:" + to_string(算过的路径.size()) << std::endl;
     std::cout << "maxPathTraversed:" + to_string(maxPathTraversed) << std::endl;
     print_vector(mapInfoList[mapInfoList.size() - 1].path);
