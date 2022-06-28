@@ -1,10 +1,12 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <iostream>
 #include <vector>
 #include <map>
 #include <set>
+#include <regex>
 #include "OneStroke.h"
 #include "PrintUtil.h"
-#include <regex>
 
 #define MAP_WIDTH_LENGTH 7
 #define MAP_HEIGHT_LENGTH 7
@@ -284,16 +286,78 @@ void GO(MapInfo &mapInfo, int startY, int startX, int deep) {
     //delete_array(mapInfo.gameMap);
 }
 
+string GetBinaryStringFromHexString(string strHex) {
+    string sReturn = "";
+    unsigned int len = strHex.length();
+    for (unsigned int i = 0; i < len; i++) {
+        switch (strHex[i]) {
+        case '0': sReturn.append("0000"); break;
+        case '1': sReturn.append("0001"); break;
+        case '2': sReturn.append("0010"); break;
+        case '3': sReturn.append("0011"); break;
+        case '4': sReturn.append("0100"); break;
+        case '5': sReturn.append("0101"); break;
+        case '6': sReturn.append("0110"); break;
+        case '7': sReturn.append("0111"); break;
+        case '8': sReturn.append("1000"); break;
+        case '9': sReturn.append("1001"); break;
+        case 'A': sReturn.append("1010"); break;
+        case 'B': sReturn.append("1011"); break;
+        case 'C': sReturn.append("1100"); break;
+        case 'D': sReturn.append("1101"); break;
+        case 'E': sReturn.append("1110"); break;
+        case 'F': sReturn.append("1111"); break;
+        }
+    }
+    if (sReturn.length() == 4) {
+        sReturn = "000" + sReturn;
+    }
+    if (sReturn.length() == 8) {
+        sReturn = sReturn.substr(1);
+    }
+    return sReturn;
+}
+
 void one_stroke_main() {
-    int** mainMap = new int*[MAP_HEIGHT_LENGTH];
+    string map_str = "0,18,30,68,44,0,10";
+    int** mainMap = new int* [MAP_HEIGHT_LENGTH];
+    for (int i = 0; i < MAP_HEIGHT_LENGTH; i++) {
+        int index = map_str.find_first_of(",");
+        string str16 = map_str.substr(0, index);
+        string str2 = GetBinaryStringFromHexString(str16);
+        mainMap[i] = new int[MAP_WIDTH_LENGTH];
+        for (int j = 0; j < MAP_WIDTH_LENGTH; j++) {
+            string position = str2.substr(0, 1);
+            cout << position + " ";
+            char* resStr = new char[1];
+            long ld = position.length();
+            char* pp = new char[ld + 1];
+            strcpy_s(pp, ld + 1, position.c_str());
+            pp[ld] = '\0';
+            strcpy(resStr, pp);
+            mainMap[i][j] = atoi(resStr);
+            str2 = str2.substr(1);
+            //cout << "str2:" + str2 << endl;
+        }
+        cout << endl;
+        map_str = map_str.substr(index + 1);
+    }
+    print_array(mainMap);
+
+
+    //return;
+
+
+    /*int** mainMap = new int*[MAP_HEIGHT_LENGTH];
     mainMap[0] = new int[MAP_WIDTH_LENGTH]{ 0, 0, 0, 0, 0, 0, 0 };
     mainMap[1] = new int[MAP_WIDTH_LENGTH]{ 0, 0, 1, 1, 0, 0, 0 };
     mainMap[2] = new int[MAP_WIDTH_LENGTH]{ 0, 1, 1, 0, 0, 0, 0 };
     mainMap[3] = new int[MAP_WIDTH_LENGTH]{ 1, 1, 0, 1, 0, 0, 0 };
     mainMap[4] = new int[MAP_WIDTH_LENGTH]{ 1, 0, 0, 0, 1, 0, 0 };
     mainMap[5] = new int[MAP_WIDTH_LENGTH]{ 0, 0, 0, 0, 0, 0, 0 };
-    mainMap[6] = new int[MAP_WIDTH_LENGTH]{ -1, 0, 1, 0, 0, 0, 0 };
+    mainMap[6] = new int[MAP_WIDTH_LENGTH]{ -1, 0, 1, 0, 0, 0, 0 };*/
     int startX = 0, startY = 6;
+    mainMap[startY][startX] = -1;
 
     vector<int**> maps;
     //记录石头坐标
