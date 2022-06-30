@@ -79,16 +79,20 @@ int* sort_array(int* arr) {
     return arr;
 }
 
+void delete_set(set<string>* set) {
+    set->erase(set->begin(), set->end());
+}
+
 struct MapInfo
 {
     int** gameMap;
     std::vector<string> path;
-    MapInfo operator = (MapInfo& info) {
+    /*MapInfo operator = (MapInfo& info) {
         gameMap = copy_array(info.gameMap);
         path = {};
         copy(info.path.begin(), info.path.end(), inserter(path, path.begin()));
         return *this;
-    };
+    };*/
 };
 
 string get_string_array(int** arr) {
@@ -276,8 +280,10 @@ void GO(MapInfo &mapInfo, int startY, int startX, int deep) {
             mapInfoList.push_back(saveMapInfo);
         }
     }
-    mapInfo.path.clear();
-    mapInfo.path.shrink_to_fit();
+    //delete_array(oldMap);
+    mapInfo.path.erase(mapInfo.path.begin(), mapInfo.path.end());
+    //mapInfo.path.clear();
+    //mapInfo.path.shrink_to_fit();
     //mapInfo.path.clear();
     /*{
         std::vector<string> tmp;
@@ -329,7 +335,7 @@ void one_stroke_main() {
         for (int j = 0; j < MAP_WIDTH_LENGTH; j++) {
             string position = str2.substr(0, 1);
             cout << position + " ";
-            char* resStr = new char[1];
+            char* resStr = new char[position.length()];
             long ld = position.length();
             char* pp = new char[ld + 1];
             strcpy_s(pp, ld + 1, position.c_str());
@@ -408,6 +414,7 @@ void one_stroke_main() {
         MapInfo mapInfo = { maps[i], vector<string>() };
         print_array(mapInfo.gameMap);
         GO(mapInfo, startY, startX, 0);
+        delete_array(mapInfo.gameMap);
         cout << "完成:" + to_string(i) + ", 最大面积:" + to_string(mapInfoList[mapInfoList.size() - 1].path.size()) << endl;
         /*if (i == 65) {
             cout << "算过的路径:" + to_string(算过的路径.size() * 4) << endl;
@@ -419,5 +426,6 @@ void one_stroke_main() {
     std::cout << "算过的路径:" + to_string(算过的路径.size()) << std::endl;
     std::cout << "maxPathTraversed:" + to_string(maxPathTraversed) << std::endl;
     print_vector(mapInfoList[mapInfoList.size() - 1].path);
+    delete_set(&算过的路径);
 }
 

@@ -14,5 +14,6 @@ int main() {
     std::cout << to_string(startTime) << std::endl;
     one_stroke_main();
     std::cout << to_string(get_time() - startTime) << std::endl;
+    system("pause");
 }
 
