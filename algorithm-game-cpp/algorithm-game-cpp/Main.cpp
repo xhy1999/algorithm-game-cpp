@@ -1,6 +1,6 @@
 ﻿#include <iostream>
 #include <chrono>
-#include "OneStroke.h"
+#include "OneLine.h"
 
 long long get_time() {
     std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -12,7 +12,9 @@ long long get_time() {
 int main() {
     long long startTime = get_time();
     std::cout << to_string(startTime) << std::endl;
-    one_stroke_main();
+    char var1[] = "0,18,30,68,44,0,10";
+    char* var2 = new char[2048];
+    one_line_main(var1, var2);
     std::cout << to_string(get_time() - startTime) << std::endl;
     system("pause");
 }

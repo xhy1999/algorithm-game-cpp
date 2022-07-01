@@ -144,13 +144,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ArrayUtils.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MapUtils.cpp" />
     <ClCompile Include="OneStroke.cpp" />
     <ClCompile Include="PrintUtil.cpp" />
+    <ClCompile Include="SetUtils.cpp" />
+    <ClCompile Include="StringUtils.cpp" />
+    <ClCompile Include="VectorUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArrayUtils.h" />
+    <ClInclude Include="MapUtils.h" />
     <ClInclude Include="OneStroke.h" />
     <ClInclude Include="PrintUtil.h" />
+    <ClInclude Include="SetUtils.h" />
+    <ClInclude Include="StringUtils.h" />
+    <ClInclude Include="VectorUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
