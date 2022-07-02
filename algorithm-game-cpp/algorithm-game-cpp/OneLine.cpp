@@ -122,6 +122,7 @@ int GetMaxPathTraversed(int** map) {
     return max;
 }
 
+int stone_num = 0;
 static volatile atomic_int maxPathTraversed = 0;
 vector<MapInfo> mapInfoList;
 set<string> 算过的路径 = {};
@@ -129,7 +130,7 @@ set<string> 算过的路径 = {};
 void GO(MapInfo& mapInfo, int startY, int startX, int deep) {
     int** oldMap = mapInfo.gameMap;
     int maxCanTraversed = GetTraversedNum(oldMap, startX, startY);
-    if (MAP_WIDTH_LENGTH * MAP_HEIGHT_LENGTH - 3 == maxPathTraversed) {
+    if (MAP_WIDTH_LENGTH * MAP_HEIGHT_LENGTH - stone_num + 3 == maxPathTraversed) {
         return;
     }
     //如果当前能到的位置加上,都没有最大值大的话,直接返回
@@ -192,6 +193,10 @@ void GO(MapInfo& mapInfo, int startY, int startX, int deep) {
             mapInfoList.push_back(saveMapInfo);
         }
     }
+    if (vector_2_json_string(mapInfo.path) 
+        == "[\"0, 5\", \"0, 4\", \"0, 3\", \"0, 2\", \"1, 2\", \"2, 2\", \"2, 1\", \"1, 1\", \"0, 1\", \"0, 0\", \"1, 0\", \"2, 0\", \"3, 0\", \"4, 0\", \"4, 1\", \"4, 2\", \"3, 2\", \"3, 3\", \"2, 3\", \"2, 4\", \"1, 4\", \"1, 5\", \"1, 6\", \"2, 6\", \"2, 5\", \"3, 5\", \"3, 4\", \"4, 4\", \"4, 3\", \"5, 3\", \"5, 2\", \"6, 2\", \"6, 3\", \"6, 4\", \"5, 4\", \"5, 5\", \"6, 5\", \"6, 6\", \"5, 6\", \"4, 6\"]") {
+        cout << "123123123" << endl;
+    }
     vector_delete(&mapInfo.path);
 }
 
@@ -210,6 +215,9 @@ void one_line_main(char* map, char* resStr) {
         for (int j = 0; j < MAP_WIDTH_LENGTH; j++) {
             string position = mapStrB.substr(0, 1);
             //cout << position + " ";
+            if (position == "1") {
+                stone_num++;
+            }
             mainMap[i][j] = atoi(string_2_char(position));
             mapStrB = mapStrB.substr(1);
         }
@@ -272,8 +280,8 @@ void one_line_main(char* map, char* resStr) {
     }
     set_delete(&intSet);
     //std::cout << "算过的路径:" + std::to_string(算过的路径.size()) << std::endl;
-    //std::cout << "maxPathTraversed:" + std::to_string(mapInfoList[mapInfoList.size() - 1].path.size()) << std::endl;
-    //vector_print(mapInfoList[mapInfoList.size() - 1].path);
+    std::cout << "maxPathTraversed:" + std::to_string(mapInfoList[mapInfoList.size() - 1].path.size()) << std::endl;
+    vector_print(mapInfoList[mapInfoList.size() - 1].path);
 
     std::map<string, string> resMap;
     resMap["path"] = vector_2_json_string(mapInfoList[mapInfoList.size() - 1].path);

@@ -18,9 +18,6 @@
     <ClCompile Include="Main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="OneStroke.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PrintUtil.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -37,6 +34,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MapUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="OneLine.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -60,6 +60,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MapUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="OneLine.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
