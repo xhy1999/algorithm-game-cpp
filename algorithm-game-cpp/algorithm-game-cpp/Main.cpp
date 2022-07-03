@@ -12,7 +12,7 @@ long long get_time() {
 int main() {
     long long startTime = get_time();
     std::cout << to_string(startTime) << std::endl;
-    char var1[] = "2,6b,40,20,0,4,101";
+    char var1[] = "2,6b,40,20,0,4,1";
     char* var2 = new char[2048];
     one_line_main(var1, var2);
     std::cout << to_string(get_time() - startTime) << std::endl;
