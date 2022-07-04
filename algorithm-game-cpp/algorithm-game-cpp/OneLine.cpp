@@ -8,17 +8,17 @@
 #include <string>
 #include "ArrayUtils.h"
 #include "MapUtils.h"
+#include "OneLine.h"
 #include "SetUtils.h"
 #include "StringUtils.h"
 #include "VectorUtils.h"
 
 using namespace std;
 
-struct MapInfo
-{
-    int** gameMap;
-    std::vector<string> path;
-};
+int stone_num;
+static volatile atomic_int maxPathTraversed;
+vector<MapInfo> mapInfoList;
+set<string> calculated_path;
 
 static int** nextArr = new int* [4]
 {
@@ -45,18 +45,18 @@ void dfs(int** dfsMap, int** book, int x, int y, int color) {
     }
 }
 
-int num = -10;
 //获取最多可以走到的格子数
 int GetTraversedNum(int** gameMap, int locationX, int locationY) {
     int** dfsMap = array_copy(gameMap);
     int** book = array_init(MAP_WIDTH_LENGTH, MAP_HEIGHT_LENGTH);
     //先染色,计算有几个"岛"
+    int dao_index = -10;
     for (int i = 0; i < MAP_HEIGHT_LENGTH; i++) {
         for (int j = 0; j < MAP_WIDTH_LENGTH; j++) {
             if (array_get(dfsMap, i, j) == 0) {
-                num--;
+                dao_index--;
                 book[i][j] = -1;
-                dfs(dfsMap, book, j, i, num);
+                dfs(dfsMap, book, j, i, dao_index);
             }
         }
     }
@@ -122,11 +122,6 @@ int GetMaxPathTraversed(int** map) {
     return max;
 }
 
-int stone_num = 0;
-static volatile atomic_int maxPathTraversed = 0;
-vector<MapInfo> mapInfoList;
-set<string> 算过的路径 = {};
-
 void GO(MapInfo& mapInfo, int startY, int startX, int deep) {
     int** oldMap = mapInfo.gameMap;
     int maxCanTraversed = GetTraversedNum(oldMap, startX, startY);
@@ -138,10 +133,10 @@ void GO(MapInfo& mapInfo, int startY, int startX, int deep) {
         return;
     }
     string oldMapStr = array_to_string(oldMap) + std::to_string(startX) + to_string(startY);
-    if (算过的路径.find(oldMapStr) != 算过的路径.end()) {
+    if (calculated_path.find(oldMapStr) != calculated_path.end()) {
         return;
     }
-    算过的路径.insert(oldMapStr);
+    calculated_path.insert(oldMapStr);
 
     MapInfo newMapInfo1 = { NULL, {} }, newMapInfo2 = { NULL, {} }, newMapInfo3 = { NULL, {} }, newMapInfo4 = { NULL, {} };
     bool goNext = false;
@@ -197,6 +192,10 @@ void GO(MapInfo& mapInfo, int startY, int startX, int deep) {
 }
 
 void one_line_main(char* map, char* resStr) {
+    //初始化
+    stone_num = 0;
+    maxPathTraversed = 0;
+    calculated_path = {};
     //将转入参数转为二维数组
     string mapStr = map;
     //std::cout << "map:" + mapStr << std::endl;
@@ -221,7 +220,7 @@ void one_line_main(char* map, char* resStr) {
         //去掉开头的'xxx,'
         mapStr = mapStr.substr(index + 1);
     }
-    //array_print(mainMap);
+    array_print(mainMap);
     //初始化地图
     int startX = 0, startY = 6;
     mainMap[startY][startX] = -1;
@@ -271,18 +270,19 @@ void one_line_main(char* map, char* resStr) {
         GO(mapInfo, startY, startX, 0);
         array_delete(mapInfo.gameMap);
         vector_delete(&mapInfo.path);
-        //string outstr = "完成:" + std::to_string(i) + ", 最大面积:" + std::to_string(mapInfoList[mapInfoList.size() - 1].path.size());
+        string outstr = "完成:" + std::to_string(i) + ", 最大面积:" + std::to_string(mapInfoList[mapInfoList.size() - 1].path.size());
         //cout << outstr << endl;
     }
     set_delete(&intSet);
-    //std::cout << "算过的路径:" + std::to_string(算过的路径.size()) << std::endl;
-    std::cout << "maxPathTraversed:" + std::to_string(mapInfoList[mapInfoList.size() - 1].path.size()) << std::endl;
-    vector_print(mapInfoList[mapInfoList.size() - 1].path);
+    //std::cout << "calculated_path:" + std::to_string(calculated_path.size()) << std::endl;
+    //std::cout << "maxPathTraversed:" + std::to_string(mapInfoList[mapInfoList.size() - 1].path.size()) << std::endl;
+    //vector_print(mapInfoList[mapInfoList.size() - 1].path);
 
     std::map<string, string> resMap;
     resMap["path"] = vector_2_json_string(mapInfoList[mapInfoList.size() - 1].path);
-    resMap["calPathNum"] = to_string(算过的路径.size());
-    set_delete(&算过的路径);
-    //std::cout << "res map:" + map_2_json_string(resMap) << std::endl;
+    resMap["calPathNum"] = to_string(calculated_path.size());
+    set_delete(&calculated_path);
+    vector_delete(&mapInfoList);
+    std::cout << "res map:" + map_2_json_string(resMap) << std::endl;
     strcpy(resStr, string_2_char(map_2_json_string(resMap)));
 }

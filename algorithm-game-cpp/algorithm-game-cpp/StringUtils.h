@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <Windows.h>
 
 using namespace std;
 
@@ -8,3 +9,6 @@ string hex_string_2_bin_string(string strHex);
 
 //stringתchar*
 char* string_2_char(string str);
+
+//wcharתstring
+string wchar_2_string(LPCWSTR pwszSrc);

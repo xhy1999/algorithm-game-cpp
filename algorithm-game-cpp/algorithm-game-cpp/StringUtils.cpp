@@ -10,22 +10,22 @@ string hex_string_2_bin_string(string strHex) {
     unsigned int len = strHex.length();
     for (unsigned int i = 0; i < len; i++) {
         switch (strHex[i]) {
-            case '0': sReturn.append("0000"); break;
-            case '1': sReturn.append("0001"); break;
-            case '2': sReturn.append("0010"); break;
-            case '3': sReturn.append("0011"); break;
-            case '4': sReturn.append("0100"); break;
-            case '5': sReturn.append("0101"); break;
-            case '6': sReturn.append("0110"); break;
-            case '7': sReturn.append("0111"); break;
-            case '8': sReturn.append("1000"); break;
-            case '9': sReturn.append("1001"); break;
-            case 'a': sReturn.append("1010"); break;
-            case 'b': sReturn.append("1011"); break;
-            case 'c': sReturn.append("1100"); break;
-            case 'd': sReturn.append("1101"); break;
-            case 'e': sReturn.append("1110"); break;
-            case 'f': sReturn.append("1111"); break;
+        case '0': sReturn.append("0000"); break;
+        case '1': sReturn.append("0001"); break;
+        case '2': sReturn.append("0010"); break;
+        case '3': sReturn.append("0011"); break;
+        case '4': sReturn.append("0100"); break;
+        case '5': sReturn.append("0101"); break;
+        case '6': sReturn.append("0110"); break;
+        case '7': sReturn.append("0111"); break;
+        case '8': sReturn.append("1000"); break;
+        case '9': sReturn.append("1001"); break;
+        case 'a': sReturn.append("1010"); break;
+        case 'b': sReturn.append("1011"); break;
+        case 'c': sReturn.append("1100"); break;
+        case 'd': sReturn.append("1101"); break;
+        case 'e': sReturn.append("1110"); break;
+        case 'f': sReturn.append("1111"); break;
         }
     }
     if (sReturn.length() == 4) {
@@ -38,11 +38,30 @@ string hex_string_2_bin_string(string strHex) {
 }
 
 char* string_2_char(string str) {
-    char* resChar = new char[str.length() + 10];
+    char* resChar = new char[str.length()];
     long ld = str.length();
     char* pp = new char[ld + 1];
     strcpy_s(pp, ld + 1, str.c_str());
     pp[ld] = '\0';
     strcpy(resChar, pp);
     return resChar;
+}
+
+// WCHAR ×ª»»Îª std::string
+string wchar_2_string(LPCWSTR pwszSrc) {
+    int nLen = WideCharToMultiByte(CP_ACP, 0, pwszSrc, -1, NULL, 0, NULL, NULL);
+    if (nLen <= 0)
+        return std::string("");
+
+    char* pszDst = new char[nLen];
+    if (NULL == pszDst)
+        return string("");
+
+    WideCharToMultiByte(CP_ACP, 0, pwszSrc, -1, pszDst, nLen, NULL, NULL);
+    pszDst[nLen - 1] = 0;
+
+    std::string strTmp(pszDst);
+    delete[] pszDst;
+
+    return strTmp;
 }
