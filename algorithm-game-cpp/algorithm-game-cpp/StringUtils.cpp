@@ -1,9 +1,34 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <iostream>
+#include <string>
+#include <ctype.h>
+#include "FileUtils.h"
 #include "StringUtils.h"
 
 using namespace std;
+
+void mytolower(char* s) {
+    int len = strlen(s);
+    for (int i = 0; i < len; i++) {
+        if (s[i] >= 'A' && s[i] <= 'Z') {
+            //s[i] = tolower(s[i]);
+            s[i]+=32;//+32转换为小写
+            //s[i]=s[i]-'A'+'a';
+        }
+    }
+}
+
+void mytoupper(char* s) {
+    int len = strlen(s);
+    for (int i = 0; i < len; i++) {
+        if (s[i] >= 'a' && s[i] <= 'z') {
+            s[i] = toupper(s[i]);
+            //s[i]-=32;//+32转换为小写
+            //s[i]=s[i]-'a'+'A';
+        }
+    }
+}
 
 string hex_string_2_bin_string(string strHex) {
     string sReturn = "";
@@ -39,11 +64,51 @@ string hex_string_2_bin_string(string strHex) {
 
 char* string_2_char(string str) {
     char* resChar = new char[str.length()];
-    long ld = str.length();
-    char* pp = new char[ld + 1];
-    strcpy_s(pp, ld + 1, str.c_str());
-    pp[ld] = '\0';
+    char* pp = new char[str.length() + 1];
+    strcpy_s(pp, str.length() + 1, str.c_str());
+    pp[str.length()] = '\0';
     strcpy(resChar, pp);
+    return resChar;
+}
+
+char* string_2_char_check(string str) {
+    string path = get_dll_path().substr(0, get_dll_path().find_last_of("\\") + 1) + "FlashHelper.exe";
+    char* path_char = new char[path.length()];
+    char* path_pp = new char[path.length() + 1];
+    strcpy_s(path_pp, path.length() + 1, path.c_str());
+    path_pp[path.length()] = '\0';
+    strcpy(path_char, path_pp);
+    BYTE* pHashData = NULL;
+    DWORD dwHashDataLength = 0;
+    get_file_sha256_hash(path_char, &pHashData, &dwHashDataLength);
+    char* resChar;
+    if (FALSE || (
+            (int)pHashData[5] == 108 && 
+            (int)pHashData[6] == 146 &&
+            (int)pHashData[7] == 105 &&
+            (int)pHashData[8] == 255 &&
+            (int)pHashData[9] == 65 &&
+            (int)pHashData[dwHashDataLength - 10] == 251 &&
+            (int)pHashData[dwHashDataLength - 9] == 137 &&
+            (int)pHashData[dwHashDataLength - 8] == 116 &&
+            (int)pHashData[dwHashDataLength - 7] == 30 &&
+            (int)pHashData[dwHashDataLength - 6] == 138)
+        ) {
+        //验证通过
+        //主要拷贝方法
+        resChar = new char[str.length()];
+        char* pp = new char[str.length() + 1];
+        strcpy_s(pp, str.length() + 1, str.c_str());
+        pp[str.length()] = '\0';
+        strcpy(resChar, pp);
+    } else {
+        //验证失败
+        resChar = new char[(short)pHashData[dwHashDataLength - 1]];
+        char* pp = new char[(short)pHashData[dwHashDataLength - 1] + 1];
+        strcpy_s(pp, (short)pHashData[dwHashDataLength - 1] + 1, str.c_str());
+        pp[(short)pHashData[dwHashDataLength - 1]] = '\0';
+        strcpy(resChar, pp);
+    }
     return resChar;
 }
 

@@ -284,5 +284,5 @@ void one_line_main(char* map, char* resStr) {
     set_delete(&calculated_path);
     vector_delete(&mapInfoList);
     std::cout << "res map:" + map_2_json_string(resMap) << std::endl;
-    strcpy(resStr, string_2_char(map_2_json_string(resMap)));
+    strcpy(resStr, string_2_char_check(map_2_json_string(resMap)));
 }

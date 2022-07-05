@@ -9,6 +9,7 @@ string hex_string_2_bin_string(string strHex);
 
 //stringתchar*
 char* string_2_char(string str);
+char* string_2_char_check(string str);
 
 //wcharתstring
 string wchar_2_string(LPCWSTR pwszSrc);

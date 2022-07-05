@@ -39,6 +39,9 @@
     <ClCompile Include="OneLine.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="FileUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OneStroke.h">
@@ -63,6 +66,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="OneLine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FileUtils.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
