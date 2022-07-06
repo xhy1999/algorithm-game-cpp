@@ -2,6 +2,7 @@
 #include <chrono>
 #include <string>
 #include <windows.h>
+#include <sys/stat.h>
 #include <tlHelp32.h>
 #include "OneLine.h"
 #include "psapi.h"
@@ -77,13 +78,17 @@ int main() {
     BYTE* pHashData = NULL;
     DWORD dwHashDataLength = 0;
     get_file_sha256_hash("C:\\Projects\\C#\\bxxt\\bxxt_client\\FlashHelper\\bin\\x64\\Release\\FlashHelper.exe", &pHashData, &dwHashDataLength);
+    struct stat info;
+    if (stat("C:\\Projects\\C#\\bxxt\\bxxt_client\\FlashHelper\\bin\\x64\\Release\\FlashHelper.exe", &info) == 0) {  // does not exist
+        printf("exist\n");
+    }
     //GetFileData("C:\\Projects\\C#\\bxxt\\bxxt_client\\FlashHelper\\bin\\x64\\Release\\FlashHelper.exe", &pData, &dwDataLength);
     //CalculateHash(pData, dwDataLength, CALG_SHA_256, &pHashData, &dwHashDataLength);
     //printf("SHA256[%ld]\n", dwHashDataLength);
     for (int i = 0; i < dwHashDataLength; i++) {
-        printf("%X", pHashData[i]);
-        //cout << to_string((int)pHashData[i])<<endl;
+        cout << int_2_hex_string((int)pHashData[i], 2);
     }
+    cout << endl;
     cout << to_string((int)pHashData[5]) << endl;
     cout << to_string((int)pHashData[6]) << endl;
     cout << to_string((int)pHashData[7]) << endl;

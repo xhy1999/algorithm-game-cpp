@@ -10,17 +10,17 @@ BOOL get_file_data(const char* pszFilePath, BYTE** ppFileData, DWORD* pdwFileDat
     HANDLE hFile = NULL;
     DWORD dwTemp = 0;
     do {
-        hFile = ::CreateFile(pszFilePath, GENERIC_READ | GENERIC_WRITE,
-            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-            FILE_ATTRIBUTE_ARCHIVE, NULL);
+        hFile = ::CreateFile(pszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
         if (INVALID_HANDLE_VALUE == hFile) {
             bRet = FALSE;
+            //cout << "FALSE1" << endl;
             break;
         }
         dwFileDataLength = ::GetFileSize(hFile, NULL);
         pFileData = new BYTE[dwFileDataLength];
         if (NULL == pFileData) {
             bRet = FALSE;
+            //cout << "FALSE2" << endl;
             break;
         }
         ::RtlZeroMemory(pFileData, dwFileDataLength);
@@ -46,34 +46,40 @@ BOOL calculate_hash(BYTE* pData, DWORD dwDataLength, ALG_ID algHashType, BYTE** 
         // 获得指定CSP的密钥容器的句柄
         bRet = ::CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
         if (FALSE == bRet) {
+            //cout << "calculate_hash FALSE1" << endl;
             break;
         }
         // 创建一个HASH对象, 指定HASH算法
         bRet = ::CryptCreateHash(hCryptProv, algHashType, NULL, NULL, &hCryptHash);
         if (FALSE == bRet) {
+            //cout << "calculate_hash FALSE2" << endl;
             break;
         }
         // 计算HASH数据
         bRet = ::CryptHashData(hCryptHash, pData, dwDataLength, 0);
         if (FALSE == bRet) {
+            //cout << "calculate_hash FALSE3" << endl;
             break;
         }
         // 获取HASH结果的大小
         dwTemp = sizeof(dwHashDataLength);
         bRet = ::CryptGetHashParam(hCryptHash, HP_HASHSIZE, (BYTE*)(&dwHashDataLength), &dwTemp, 0);
         if (FALSE == bRet) {
+            //cout << "calculate_hash FALSE4" << endl;
             break;
         }
         // 申请内存
         pHashData = new BYTE[dwHashDataLength];
         if (NULL == pHashData) {
             bRet = FALSE;
+            //cout << "calculate_hash FALSE5" << endl;
             break;
         }
         ::RtlZeroMemory(pHashData, dwHashDataLength);
         // 获取HASH结果数据
         bRet = ::CryptGetHashParam(hCryptHash, HP_HASHVAL, pHashData, &dwHashDataLength, 0);
         if (FALSE == bRet) {
+            //cout << "calculate_hash FALSE6" << endl;
             break;
         }
         // 返回数据

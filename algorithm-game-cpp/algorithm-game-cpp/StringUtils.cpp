@@ -1,33 +1,23 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+#include <sstream>
 #include <iostream>
 #include <string>
-#include <ctype.h>
+#include <cctype>
+#include <algorithm>
 #include "FileUtils.h"
 #include "StringUtils.h"
 
 using namespace std;
 
-void mytolower(char* s) {
-    int len = strlen(s);
-    for (int i = 0; i < len; i++) {
-        if (s[i] >= 'A' && s[i] <= 'Z') {
-            //s[i] = tolower(s[i]);
-            s[i]+=32;//+32转换为小写
-            //s[i]=s[i]-'A'+'a';
-        }
-    }
-}
-
-void mytoupper(char* s) {
-    int len = strlen(s);
-    for (int i = 0; i < len; i++) {
-        if (s[i] >= 'a' && s[i] <= 'z') {
-            s[i] = toupper(s[i]);
-            //s[i]-=32;//+32转换为小写
-            //s[i]=s[i]-'a'+'A';
-        }
-    }
+string int_2_hex_string(int i, int width) {
+    stringstream ioss; //定义字符串流
+    string s_temp; //存放转化后字符
+    ioss << std::hex << i; //以十六制形式输出
+    ioss >> s_temp;
+    string s(width - s_temp.size(), '0'); //补0
+    s += s_temp; //合并
+    return s;
 }
 
 string hex_string_2_bin_string(string strHex) {
