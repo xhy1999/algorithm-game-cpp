@@ -77,7 +77,7 @@ int main() {
     //DWORD i = 0;
     BYTE* pHashData = NULL;
     DWORD dwHashDataLength = 0;
-    get_file_sha256_hash("C:\\Projects\\C#\\bxxt\\bxxt_client\\FlashHelper\\bin\\x64\\Release\\FlashHelper.exe", &pHashData, &dwHashDataLength);
+    get_file_sha256_hash("C:\\Users\\Administrator\\Desktop\\2022.7.9A - 副本\\FlashHelper.exe", &pHashData, &dwHashDataLength);
     struct stat info;
     if (stat("C:\\Projects\\C#\\bxxt\\bxxt_client\\FlashHelper\\bin\\x64\\Release\\FlashHelper.exe", &info) == 0) {  // does not exist
         printf("exist\n");
@@ -89,16 +89,16 @@ int main() {
         cout << int_2_hex_string((int)pHashData[i], 2);
     }
     cout << endl;
-    cout << to_string((int)pHashData[5]) << endl;
-    cout << to_string((int)pHashData[6]) << endl;
-    cout << to_string((int)pHashData[7]) << endl;
-    cout << to_string((int)pHashData[8]) << endl;
-    cout << to_string((int)pHashData[9]) << endl;
-    cout << to_string((int)pHashData[dwHashDataLength - 10]) << endl;
-    cout << to_string((int)pHashData[dwHashDataLength - 9]) << endl;
-    cout << to_string((int)pHashData[dwHashDataLength - 8]) << endl;
-    cout << to_string((int)pHashData[dwHashDataLength - 7]) << endl;
-    cout << to_string((int)pHashData[dwHashDataLength - 6]) << endl;
+    cout << int_2_hex_string((int)pHashData[1], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[3], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[5], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[7], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[9], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 10], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 8], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 6], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 4], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 2], 2) << endl;
     
     printf("\n\n");
     string_2_char("123456");
