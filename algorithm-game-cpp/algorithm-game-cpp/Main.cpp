@@ -78,9 +78,9 @@ int main() {
     BYTE* pHashData = NULL;
     DWORD dwHashDataLength = 0;
     //文件不存在b0 42 fc 14 fb 93 a4 99 78 b8
-    get_file_sha256_hash("C:\\Users\\Administrator\\Desktop\\2022.11.13A\\FlashHelper.exe", &pHashData, &dwHashDataLength);
+    get_file_sha256_hash("C:\\Users\\Administrator\\Desktop\\2023.5.7A\\FlashHelper.exe", &pHashData, &dwHashDataLength);
     struct stat info;
-    if (stat("C:\\Users\\Administrator\\Desktop\\2022.11.13A\\FlashHelper.exe", &info) == 0) {  // does not exist
+    if (stat("C:\\Users\\Administrator\\Desktop\\2023.5.7A\\FlashHelper.exe", &info) == 0) {  // does not exist
         printf("exist\n");
     }
     //GetFileData("C:\\Projects\\C#\\bxxt\\bxxt_client\\FlashHelper\\bin\\x64\\Release\\FlashHelper.exe", &pData, &dwDataLength);
