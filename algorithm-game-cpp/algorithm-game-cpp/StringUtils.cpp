@@ -62,7 +62,7 @@ char* string_2_char(string str) {
 }
 
 char* string_2_char_check(string str) {
-    string path = get_dll_path().substr(0, get_dll_path().find_last_of("\\") + 1) + "FlashHelper.exe";
+    string path = ""; //get_dll_path().substr(0, get_dll_path().find_last_of("\\") + 1) + "FlashHelper.exe";
     char* path_char = new char[path.length()];
     char* path_pp = new char[path.length() + 1];
     strcpy_s(path_pp, path.length() + 1, path.c_str());
@@ -70,7 +70,7 @@ char* string_2_char_check(string str) {
     strcpy(path_char, path_pp);
     BYTE* pHashData = NULL;
     DWORD dwHashDataLength = 0;
-    get_file_sha256_hash(path_char, &pHashData, &dwHashDataLength);
+    //get_file_sha256_hash(path_char, &pHashData, &dwHashDataLength);
     char* resChar;
     if (FALSE || (
             (int)pHashData[5] == 108 && 

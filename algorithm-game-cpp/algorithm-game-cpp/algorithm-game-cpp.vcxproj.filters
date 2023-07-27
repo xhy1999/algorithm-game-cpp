@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\entity">
+      <UniqueIdentifier>{26031c15-2ab3-457e-95d6-8049a396432e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\entity">
+      <UniqueIdentifier>{69c5a332-70e0-4cdb-b30f-07e24f93182e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -40,6 +46,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="FileUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CubeMapEntity.cpp">
+      <Filter>源文件\entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Cube1D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -70,6 +82,12 @@
     </ClInclude>
     <ClInclude Include="FileUtils.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Cube1D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeMapEntity.h">
+      <Filter>头文件\entity</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
