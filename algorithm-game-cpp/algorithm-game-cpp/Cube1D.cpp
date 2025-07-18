@@ -45,7 +45,7 @@ void solve() {
 void cube_1d_main() {
 	CubeMapEntity map = CubeMapEntity(6, true);
 	map.printMap();
-	CubeState state = { &map, 0 };
+	CubeState state = { map, 0 };
 	open_queue.push(state);
 	CubeState state2 = open_queue.top();
 	state2.map.printMap();
