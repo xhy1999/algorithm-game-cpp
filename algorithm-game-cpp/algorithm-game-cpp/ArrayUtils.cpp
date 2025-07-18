@@ -13,19 +13,8 @@ void array_print(int** arr) {
         std::cout << std::endl;
     }
 }
-void array_print(string** arr) {
-    for (int i = 0; i < 9; i++) {
-        for (int j = 0; j < 9; j++) {
-            std::cout << array_get(arr, i, j) + "\t";
-        }
-        std::cout << std::endl;
-    }
-}
 
 int array_get(int** arr, int var0, int var1) {
-    return *(arr[var0] + var1);
-}
-string array_get(string** arr, int var0, int var1) {
     return *(arr[var0] + var1);
 }
 
@@ -67,26 +56,7 @@ int** array_init(int width, int height) {
     return arr;
 }
 
-string** array_init_str(int width, int height) {
-    string** arr = new string* [height];
-    for (int i = 0; i < height; i++) {
-        arr[i] = new string[width];
-        for (int j = 0; j < width; j++) {
-            arr[i][j] = "";
-        }
-    }
-    return arr;
-}
-
 void array_delete(int** arr) {
-    for (int i = 0; i < MAP_HEIGHT_LENGTH; ++i) {
-        delete[] arr[i];
-        arr[i] = NULL;
-    }
-    delete[] arr;
-    arr = NULL;
-}
-void array_delete(string** arr) {
     for (int i = 0; i < MAP_HEIGHT_LENGTH; ++i) {
         delete[] arr[i];
         arr[i] = NULL;

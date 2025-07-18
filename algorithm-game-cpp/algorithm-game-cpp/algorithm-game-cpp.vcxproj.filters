@@ -54,6 +54,12 @@
     <ClCompile Include="Cube1D.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CubeMaze.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RandomUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OneStroke.h">
@@ -88,6 +94,12 @@
     </ClInclude>
     <ClInclude Include="CubeMapEntity.h">
       <Filter>头文件\entity</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CubeMaze.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

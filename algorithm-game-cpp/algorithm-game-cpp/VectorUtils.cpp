@@ -16,6 +16,10 @@ void vector_print(vector<string> v) {
     cout << "----------" << endl;
 }
 
+void vector_delete(std::vector<int>* v) {
+    std::vector<int>().swap(*v);
+}
+
 void vector_delete(vector<string>* v) {
     v->erase(v->begin(), v->end());
 }

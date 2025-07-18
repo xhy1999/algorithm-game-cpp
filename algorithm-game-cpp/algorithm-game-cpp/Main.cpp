@@ -9,6 +9,7 @@
 #include "StringUtils.h"
 #include "FileUtils.h"
 #include "Cube1D.h"
+#include "CubeMaze.h"
 
 using namespace std;
 
@@ -116,6 +117,7 @@ long long get_time() {
 //}
 //
 int main() {
-    cube_1d_main();
+    //cube_1d_main();
+    cube_maze_main();
 	return 1;
 }

@@ -15,5 +15,7 @@ void vector_delete(vector<string>* v);
 //释放vector所占的内存
 void vector_delete(vector<MapInfo>* v);
 
+void vector_delete(std::vector<int>* v);
+
 //将vector转化为json字符串
 string vector_2_json_string(vector<string> v);

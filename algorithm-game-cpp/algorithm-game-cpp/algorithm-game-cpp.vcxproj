@@ -147,11 +147,13 @@
     <ClCompile Include="ArrayUtils.cpp" />
     <ClCompile Include="Cube1D.cpp" />
     <ClCompile Include="CubeMapEntity.cpp" />
+    <ClCompile Include="CubeMaze.cpp" />
     <ClCompile Include="FileUtils.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MapUtils.cpp" />
     <ClCompile Include="OneLine.cpp" />
     <ClCompile Include="PrintUtil.cpp" />
+    <ClCompile Include="RandomUtils.cpp" />
     <ClCompile Include="SetUtils.cpp" />
     <ClCompile Include="StringUtils.cpp" />
     <ClCompile Include="VectorUtils.cpp" />
@@ -160,11 +162,13 @@
     <ClInclude Include="ArrayUtils.h" />
     <ClInclude Include="Cube1D.h" />
     <ClInclude Include="CubeMapEntity.h" />
+    <ClInclude Include="CubeMaze.h" />
     <ClInclude Include="FileUtils.h" />
     <ClInclude Include="MapUtils.h" />
     <ClInclude Include="OneLine.h" />
     <ClInclude Include="OneStroke.h" />
     <ClInclude Include="PrintUtil.h" />
+    <ClInclude Include="RandomUtils.h" />
     <ClInclude Include="SetUtils.h" />
     <ClInclude Include="StringUtils.h" />
     <ClInclude Include="VectorUtils.h" />
