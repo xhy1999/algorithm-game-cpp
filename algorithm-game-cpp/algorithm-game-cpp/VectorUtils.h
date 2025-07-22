@@ -7,6 +7,7 @@
 using namespace std;
 
 //控制台输出vector
+void vector_print(vector<int> v);
 void vector_print(vector<string> v);
 
 //释放vector所占的内存

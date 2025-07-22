@@ -58,9 +58,9 @@ struct CubeMap {
                 this->map[i][j] = src[i][j];
     }
 
-    /*void release() {
+    void release() {
         std::vector<int>().swap(opPath);
-    }*/
+    }
 
     //A* Ëã·¨ÖÐµÄ f(n) = g(n) + h(n)
     int f() const { return step + h; }
