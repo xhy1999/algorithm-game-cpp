@@ -39,7 +39,7 @@ const int MAX_DEPTH = 15;
 struct CubeMap {
 
     //当前地图
-    int map[MAP_SIZE][MAP_SIZE];
+    int** gameMap;
     //当前步数(从起点到此状态)
     int step;
     //启发值(中心区域与目标的偏差程度)
@@ -48,14 +48,11 @@ struct CubeMap {
     //一个16进制数字 高2位(操作行/列的索引,0-2,左到右,上到下) 低2位(0[上]1[右]2[下]3[左])
     std::vector<int> opPath;
 
-    CubeMap(const int src[9][9], int step_, int h_, const std::vector<int>& path) {
+    CubeMap(int** src, int step_, int h_, const std::vector<int>& path) {
         this->step = step_;
         this->h = h_;
         this->opPath = path;
-        // 拷贝地图
-        for (int i = 0; i < 9; ++i)
-            for (int j = 0; j < 9; ++j)
-                this->map[i][j] = src[i][j];
+        this->gameMap = map_copy(src);
     }
 
     void release() {
@@ -70,7 +67,7 @@ struct CubeMap {
         int num = 0;
         for (int i = MAP_START; i < MAP_SIZE; i++) {
             for (int j = MAP_START; j < MAP_SIZE; j++) {
-                if (map[i][j] == TARGET) {
+                if (map_get(gameMap, i, j) == TARGET) {
                     num++;
                 }
             }

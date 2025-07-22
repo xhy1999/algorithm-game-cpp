@@ -21,7 +21,7 @@ chrono::steady_clock::time_point startTime;
 
 
 //压缩地图 EMPTY会被压缩为OTHER
-static uint64_t compress(const int map[MAP_SIZE][MAP_SIZE]) {
+static uint64_t compress(int** map) {
     uint64_t val = 0L;
     // 第0-2行中心3列
     for (int i = MAP_START; i < MAP_INDEX_START; i++) {
@@ -78,22 +78,22 @@ static void deCompress(uint64_t val, int map[MAP_SIZE][MAP_SIZE]) {
 
 /************** 数组相关方法 **************/
 
-static void array_copy(const int src[MAP_SIZE][MAP_SIZE], int target[MAP_SIZE][MAP_SIZE]) {
-    for (int i = 0; i < MAP_SIZE; ++i)
-        for (int j = 0; j < MAP_SIZE; ++j)
-            target[i][j] = src[i][j];
-}
-
-static void array_print(const int arr[MAP_SIZE][MAP_SIZE]) {
-    for (int i = 0; i < MAP_SIZE; i++) {
-        for (int j = 0; j < MAP_SIZE; j++) {
-            std::cout << arr[i][j];
-        }
-        std::cout << '\n';
-    }
-    std::cout << "COMP:" << compress(arr);
-    std::cout << '\n';
-}
+//static void array_copy(const int src[MAP_SIZE][MAP_SIZE], int target[MAP_SIZE][MAP_SIZE]) {
+//    for (int i = 0; i < MAP_SIZE; ++i)
+//        for (int j = 0; j < MAP_SIZE; ++j)
+//            target[i][j] = src[i][j];
+//}
+//
+//static void array_print(const int arr[MAP_SIZE][MAP_SIZE]) {
+//    for (int i = 0; i < MAP_SIZE; i++) {
+//        for (int j = 0; j < MAP_SIZE; j++) {
+//            std::cout << arr[i][j];
+//        }
+//        std::cout << '\n';
+//    }
+//    std::cout << "COMP:" << compress(arr);
+//    std::cout << '\n';
+//}
 
 int map_get(int** arr, int var0, int var1) {
     return *(arr[var0] + var1);
@@ -110,6 +110,8 @@ void map_print(int** arr) {
         }
         std::cout << std::endl;
     }
+    std::cout << "COMP:" << compress(arr);
+    std::cout << '\n';
 }
 
 //深拷贝地图
@@ -163,7 +165,7 @@ static int getOp(int op) {
 /************** 求解相关方法 **************/
 
 //启发函数:中心区域中不等于目标的格子数
-static int heuristic(const int map[MAP_SIZE][MAP_SIZE]) {
+static int heuristic(int** map) {
     int mismatch = 0;
     for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
         for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
@@ -186,12 +188,13 @@ static bool isReverse(const std::vector<int> path, int move) {
 }
 
 //选定行左移 row为索引
-static void moveRowLeft(const int map[MAP_SIZE][MAP_SIZE], int row, int res[MAP_SIZE][MAP_SIZE]) {
-    array_copy(map, res);
+static int** moveRowLeft(int** map, int row) {
+    int** res = map_copy(map);
     for (int j = MAP_START; j < MAP_END; j++) {
         res[row][j] = map[row][j + 1];
     }
     res[row][MAP_END] = EMPTY;
+    return res;
 }
 
 //判断选定行能否左移
@@ -200,8 +203,8 @@ static bool canRowLeft(int map[MAP_SIZE][MAP_SIZE], int row) {
 }
 
 //选定行右移 row为索引
-static void moveRowRight(const int map[MAP_SIZE][MAP_SIZE], int row, int res[MAP_SIZE][MAP_SIZE]) {
-    array_copy(map, res);
+static int** moveRowRight(const int map[MAP_SIZE][MAP_SIZE], int row, int res[MAP_SIZE][MAP_SIZE]) {
+    map_copy(map, res);
     for (int j = MAP_END; j > MAP_START; j--) {
         res[row][j] = map[row][j - 1];
     }
@@ -214,8 +217,8 @@ static bool canRowRight(int map[MAP_SIZE][MAP_SIZE], int row) {
 }
 
 //选定列上移 col为索引
-static void moveColUp(const int map[MAP_SIZE][MAP_SIZE], int col, int res[MAP_SIZE][MAP_SIZE]) {
-    array_copy(map, res);
+static int** moveColUp(const int map[MAP_SIZE][MAP_SIZE], int col, int res[MAP_SIZE][MAP_SIZE]) {
+    map_copy(map, res);
     for (int i = MAP_START; i < MAP_END; i++) {
         res[i][col] = map[i + 1][col];
     }
@@ -228,8 +231,8 @@ static bool canColUp(const int map[MAP_SIZE][MAP_SIZE], int col) {
 }
 
 //选定列下移
-static void moveColDown(const int map[MAP_SIZE][MAP_SIZE], int col, int res[MAP_SIZE][MAP_SIZE]) {
-    array_copy(map, res);
+static int** moveColDown(const int map[MAP_SIZE][MAP_SIZE], int col, int res[MAP_SIZE][MAP_SIZE]) {
+    map_copy(map, res);
     for (int i = MAP_END; i > MAP_START; i--) {
         res[i][col] = map[i - 1][col];
     }
@@ -247,7 +250,7 @@ std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
 std::unordered_set<uint64_t> visited;
 
 //A* 搜索主逻辑
-static std::vector<int> solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
+static std::vector<int> solve(int** startGrid) {
     visited.insert(compress(startGrid));
     // 初始启发值
     int h0 = heuristic(startGrid);
@@ -352,13 +355,8 @@ static std::vector<int> solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
     return {};
 }
 
-void random_map(int res[MAP_SIZE][MAP_SIZE]) {
-    //首先将所有元素初始化为9
-    for (int i = 0; i < MAP_SIZE; i++) {
-        for (int j = 0; j < MAP_SIZE; j++) {
-            res[i][j] = EMPTY;
-        }
-    }
+int** random_map() {
+    int** map = map_init(EMPTY);
     std::vector<int> nums;
     // 将 2~6 每个数字加入 9 次
     for (int i = 2; i <= 6; i++) {
@@ -377,33 +375,31 @@ void random_map(int res[MAP_SIZE][MAP_SIZE]) {
     // 第0-2行中心3列
     for (int i = MAP_START; i < MAP_INDEX_START; i++) {
         for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
-            res[i][j] = nums[num++];
+            map[i][j] = nums[num++];
         }
     }
     // 第3-5行整行9列
     for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
         for (int j = MAP_START; j <= MAP_END; j++) {
-            res[i][j] = nums[num++];
+            map[i][j] = nums[num++];
         }
     }
     // 第6-8行中心3列
     for (int i = MAP_INDEX_END + 1; i < MAP_SIZE; i++) {
         for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
-            res[i][j] = nums[num++];
+            map[i][j] = nums[num++];
         }
     }
+    return map;
 }
 
-void convert_map(const int src[MAP_SIZE][MAP_SIZE], int targetMap[MAP_SIZE][MAP_SIZE], int target) {
+int** convert_map(int** src, int target) {
+    int** targetMap = map_init(EMPTY);
     for (int i = MAP_START; i < MAP_SIZE; i++) {
         for (int j = MAP_START; j < MAP_SIZE; j++) {
-            if (src[i][j] == EMPTY) {
-                targetMap[i][j] = EMPTY;
-            }
-            else if (src[i][j] == target) {
+            if (src[i][j] == target) {
                 targetMap[i][j] = 1;
-            }
-            else {
+            } else {
                 targetMap[i][j] = 0;
             }
         }
@@ -411,7 +407,7 @@ void convert_map(const int src[MAP_SIZE][MAP_SIZE], int targetMap[MAP_SIZE][MAP_
 }
 
 void cube_maze_main() {
-    int map[MAP_SIZE][MAP_SIZE];
+    //int map[MAP_SIZE][MAP_SIZE];
     /*map[MAP_SIZE][MAP_SIZE] = {
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
@@ -424,8 +420,8 @@ void cube_maze_main() {
                 {9, 9, 9, 1, 1, 1, 9, 9, 9}
     }; */
 
-    random_map(map);
-    array_print(map);
+    int** map = random_map();
+    map_print(map);
     //deCompress(28558319943680, map);
     int calPathNum = 0;
     vector<int> resList;
@@ -439,9 +435,8 @@ void cube_maze_main() {
             std::greater<CubeMap>(), std::move(baseVec));
         std::unordered_set<uint64_t>().swap(visited);
         visited.reserve(1 << 21);// 等价于 reserve(1048576)
-        int calcMap[MAP_SIZE][MAP_SIZE];
-        convert_map(map, calcMap, i);
-        array_print(calcMap);
+        int** calcMap = convert_map(map, i);
+        map_print(calcMap);
         //调用solve函数寻找解路径
         vector<int> result = solve(calcMap);
         calPathNum += nodesExpanded;
