@@ -76,25 +76,6 @@ static void deCompress(uint64_t val, int map[MAP_SIZE][MAP_SIZE]) {
     }
 }
 
-/************** 数组相关方法 **************/
-
-//static void array_copy(const int src[MAP_SIZE][MAP_SIZE], int target[MAP_SIZE][MAP_SIZE]) {
-//    for (int i = 0; i < MAP_SIZE; ++i)
-//        for (int j = 0; j < MAP_SIZE; ++j)
-//            target[i][j] = src[i][j];
-//}
-//
-//static void array_print(const int arr[MAP_SIZE][MAP_SIZE]) {
-//    for (int i = 0; i < MAP_SIZE; i++) {
-//        for (int j = 0; j < MAP_SIZE; j++) {
-//            std::cout << arr[i][j];
-//        }
-//        std::cout << '\n';
-//    }
-//    std::cout << "COMP:" << compress(arr);
-//    std::cout << '\n';
-//}
-
 int map_get(int** arr, int var0, int var1) {
     return *(arr[var0] + var1);
 }
@@ -148,6 +129,25 @@ int** map_init(int initVal) {
     return arr;
 }
 
+/************** 数组相关方法 **************/
+
+//static void array_copy(const int src[MAP_SIZE][MAP_SIZE], int target[MAP_SIZE][MAP_SIZE]) {
+//    for (int i = 0; i < MAP_SIZE; ++i)
+//        for (int j = 0; j < MAP_SIZE; ++j)
+//            target[i][j] = src[i][j];
+//}
+//
+//static void array_print(const int arr[MAP_SIZE][MAP_SIZE]) {
+//    for (int i = 0; i < MAP_SIZE; i++) {
+//        for (int j = 0; j < MAP_SIZE; j++) {
+//            std::cout << arr[i][j];
+//        }
+//        std::cout << '\n';
+//    }
+//    std::cout << "COMP:" << compress(arr);
+//    std::cout << '\n';
+//}
+
 /************** 操作相关方法 **************/
 
 //(操作行/列的索引,0-2,左到右,上到下) 最终索引要 +3
@@ -198,49 +198,52 @@ static int** moveRowLeft(int** map, int row) {
 }
 
 //判断选定行能否左移
-static bool canRowLeft(int map[MAP_SIZE][MAP_SIZE], int row) {
+static bool canRowLeft(int** map, int row) {
     return map[row][MAP_INDEX_END + 1] != EMPTY;
 }
 
 //选定行右移 row为索引
-static int** moveRowRight(const int map[MAP_SIZE][MAP_SIZE], int row, int res[MAP_SIZE][MAP_SIZE]) {
-    map_copy(map, res);
+static int** moveRowRight(int** map, int row) {
+    int** res = map_copy(map);
     for (int j = MAP_END; j > MAP_START; j--) {
         res[row][j] = map[row][j - 1];
     }
     res[row][MAP_START] = EMPTY;
+    return res;
 }
 
 //判断选定行能否右移
-static bool canRowRight(int map[MAP_SIZE][MAP_SIZE], int row) {
+static bool canRowRight(int** map, int row) {
     return map[row][MAP_INDEX_START - 1] != EMPTY;
 }
 
 //选定列上移 col为索引
-static int** moveColUp(const int map[MAP_SIZE][MAP_SIZE], int col, int res[MAP_SIZE][MAP_SIZE]) {
-    map_copy(map, res);
+static int** moveColUp(int** map, int col) {
+    int** res = map_copy(map);
     for (int i = MAP_START; i < MAP_END; i++) {
         res[i][col] = map[i + 1][col];
     }
     res[MAP_END][col] = EMPTY;
+    return res;
 }
 
 //判断选定列能否上移
-static bool canColUp(const int map[MAP_SIZE][MAP_SIZE], int col) {
+static bool canColUp(int** map, int col) {
     return map[MAP_INDEX_END + 1][col] != EMPTY;
 }
 
 //选定列下移
-static int** moveColDown(const int map[MAP_SIZE][MAP_SIZE], int col, int res[MAP_SIZE][MAP_SIZE]) {
-    map_copy(map, res);
+static int** moveColDown(int** map, int col) {
+    int** res = map_copy(map);
     for (int i = MAP_END; i > MAP_START; i--) {
         res[i][col] = map[i - 1][col];
     }
     res[MAP_START][col] = EMPTY;
+    return res;
 }
 
 //判断选定列能否下移
-static bool canColDown(int map[MAP_SIZE][MAP_SIZE], int col) {
+static bool canColDown(int** map, int col) {
     return map[MAP_INDEX_START - 1][col] != EMPTY;
 }
 
@@ -254,7 +257,7 @@ static std::vector<int> solve(int** startGrid) {
     visited.insert(compress(startGrid));
     // 初始启发值
     int h0 = heuristic(startGrid);
-    pq.push(CubeMap(startGrid, 0, h0, {}));
+    pq.push(CubeMap(startGrid, 0, h0, {}, NULL));
     //重置计数器
     nodesExpanded = 0;
     //记录开始时间
@@ -274,82 +277,80 @@ static std::vector<int> solve(int** startGrid) {
         }
         //如果已达目标状态，返回路径
         if (curr.h == 0) {
-            curr.release();
+            //curr.release();
+            //vector_delete(&curr.opPath);
+            //map_delete(curr.gameMap);
             return curr.opPath;
         }
         //步数下限剪枝
         if (curr.step + curr.h > MAX_DEPTH) {
-            curr.release();
+            //curr.release();
+            //vector_delete(&curr.opPath);
+            //map_delete(curr.gameMap);
             continue;
         }
         //超过最大步数
         if (curr.step >= MAX_DEPTH) {
-            curr.release();
+            //curr.release();
+            //vector_delete(&curr.opPath);
+            //map_delete(curr.gameMap);
             continue;
         }
         //判断总目标是否足够
         if (curr.targetNum() < 9) {
-            curr.release();
+            //curr.release();
+            //vector_delete(&curr.opPath);
+            //map_delete(curr.gameMap);
             continue;
         }
         //尝试对第3~5行进行左右移动
         for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
             //左移
-            if (canRowLeft(curr.map, i)) {
+            if (canRowLeft(curr.gameMap, i)) {
                 //生成操作
                 int op = ((i - 3) << 2) | OP_LEFT;
                 //生成左移后的地图
-                int leftMap[MAP_SIZE][MAP_SIZE];
-                moveRowLeft(curr.map, i, leftMap);
+                int** leftMap = moveRowLeft(curr.gameMap, i);
                 uint64_t keyLeft = compress(leftMap);
                 //没有计算左移后的地图,且不是上一步的逆操作
                 if (visited.insert(keyLeft).second && !isReverse(curr.opPath, op)) {
-                    std::vector<int> newPath = curr.opPath;
-                    newPath.push_back(op);
-                    pq.push(CubeMap(leftMap, curr.step + 1, heuristic(leftMap), newPath));
+                    pq.push(CubeMap(leftMap, curr.step + 1, heuristic(leftMap), curr.opPath, op));
                 }
             }
             //右移
-            if (canRowRight(curr.map, i)) {
+            if (canRowRight(curr.gameMap, i)) {
                 int op = ((i - 3) << 2) | OP_RIGHT;
-                int rightMap[MAP_SIZE][MAP_SIZE];
-                moveRowRight(curr.map, i, rightMap);
+                int** rightMap = moveRowRight(curr.gameMap, i);
                 uint64_t keyRight = compress(rightMap);
                 if (visited.insert(keyRight).second && !isReverse(curr.opPath, op)) {
-                    std::vector<int> newPath = curr.opPath;
-                    newPath.push_back(op);
-                    pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), newPath));
+                    pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), curr.opPath, op));
                 }
             }
         }
         //尝试对第3~5列进行上下移动
         for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
             //上移
-            if (canColUp(curr.map, j)) {
+            if (canColUp(curr.gameMap, j)) {
                 int op = ((j - 3) << 2) | OP_UP;
-                int upMap[MAP_SIZE][MAP_SIZE];
-                moveColUp(curr.map, j, upMap);
+                int** upMap = moveColUp(curr.gameMap, j);
                 uint64_t keyUp = compress(upMap);
                 if (visited.insert(keyUp).second && !isReverse(curr.opPath, op)) {
-                    std::vector<int> newPath = curr.opPath;
-                    newPath.push_back(op);
-                    pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), newPath));
+                    pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), curr.opPath, op));
                 }
             }
             //下移
-            if (canColDown(curr.map, j)) {
+            if (canColDown(curr.gameMap, j)) {
                 int op = ((j - 3) << 2) | OP_DOWN;
-                int downMap[MAP_SIZE][MAP_SIZE];
-                moveColDown(curr.map, j, downMap);
+                int** downMap = moveColDown(curr.gameMap, j);
                 uint64_t keyDown = compress(downMap);
                 if (visited.insert(keyDown).second && !isReverse(curr.opPath, op)) {
-                    std::vector<int> newPath = curr.opPath;
-                    newPath.push_back(op);
-                    pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), newPath));
+                    pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), curr.opPath, op));
                 }
             }
         }
-        curr.release();
+        //curr.release();
+        //vector_delete(&curr.opPath);
+        //map_delete(curr.gameMap);
     }
     //未找到解
     return {};
@@ -404,6 +405,7 @@ int** convert_map(int** src, int target) {
             }
         }
     }
+    return targetMap;
 }
 
 void cube_maze_main() {
@@ -429,10 +431,10 @@ void cube_maze_main() {
     auto startTime = chrono::steady_clock::now();
     for (int i = 2; i <= 6; i++) {
         std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
-        std::vector<CubeMap> baseVec;
-        baseVec.reserve(100000);
-        std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq(
-            std::greater<CubeMap>(), std::move(baseVec));
+        //std::vector<CubeMap> baseVec;
+        //baseVec.reserve(100000);
+        //std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq(
+        //    std::greater<CubeMap>(), std::move(baseVec));
         std::unordered_set<uint64_t>().swap(visited);
         visited.reserve(1 << 21);// 等价于 reserve(1048576)
         int** calcMap = convert_map(map, i);
@@ -466,35 +468,31 @@ void cube_maze_main() {
             std::cout << x << ",";
         }
         std::cout << std::endl;
-        int currentMap[MAP_SIZE][MAP_SIZE];
-        // 复制map到currentMap，假设有copy函数
-        for (int i = 0; i < MAP_SIZE; i++)
-            for (int j = 0; j < MAP_SIZE; j++)
-                currentMap[i][j] = map[i][j];
+        int** currentMap = map_copy(map);
         for (int op : resList) {
             cout << "→ " << op << endl;
             int opIndex = 3 + getOpIndex(op);
             switch (getOp(op)) {
                 case OP_UP:
                     cout << "上移第" << (opIndex + 1) << "列" << endl;
-                    moveColUp(currentMap, opIndex, currentMap);
+                    currentMap = moveColUp(currentMap, opIndex);
                     break;
                 case OP_RIGHT:
                     cout << "右移第" << (opIndex + 1) << "行" << endl;
-                    moveRowRight(currentMap, opIndex, currentMap);
+                    currentMap = moveRowRight(currentMap, opIndex);
                     break;
                 case OP_DOWN:
                     cout << "下移第" << (opIndex + 1) << "列" << endl;
-                    moveColDown(currentMap, opIndex, currentMap);
+                    currentMap = moveColDown(currentMap, opIndex);
                     break;
                 case OP_LEFT:
                     cout << "左移第" << (opIndex + 1) << "行" << endl;
-                    moveRowLeft(currentMap, opIndex, currentMap);
+                    currentMap = moveRowLeft(currentMap, opIndex);
                     break;
                 default:
                     break;
             }
-            array_print(currentMap);
+            map_print(currentMap);
             cout << endl;
         }
     }

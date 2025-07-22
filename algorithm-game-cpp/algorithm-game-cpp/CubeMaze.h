@@ -36,6 +36,12 @@ const int MAP_INDEX_END = 5;
 //最大搜索步数
 const int MAX_DEPTH = 15;
 
+
+int map_get(int** arr, int var0, int var1);
+int** map_copy(int** map);
+void map_delete(int** arr);
+void cube_maze_main();
+
 struct CubeMap {
 
     //当前地图
@@ -48,15 +54,19 @@ struct CubeMap {
     //一个16进制数字 高2位(操作行/列的索引,0-2,左到右,上到下) 低2位(0[上]1[右]2[下]3[左])
     std::vector<int> opPath;
 
-    CubeMap(int** src, int step_, int h_, const std::vector<int>& path) {
+    CubeMap(int** src, int step_, int h_, const std::vector<int>& path, int addPath) {
+        this->gameMap = map_copy(src);
         this->step = step_;
         this->h = h_;
         this->opPath = path;
-        this->gameMap = map_copy(src);
+        if (addPath != NULL) {
+            this->opPath.push_back(addPath);
+        }
     }
 
     void release() {
         std::vector<int>().swap(opPath);
+        map_delete(gameMap);
     }
 
     //A* 算法中的 f(n) = g(n) + h(n)
@@ -82,5 +92,3 @@ struct CubeMap {
     }
 
 };
-
-void cube_maze_main();
