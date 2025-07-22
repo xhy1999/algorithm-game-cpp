@@ -293,7 +293,7 @@ static std::vector<int> solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
 }
 
 void cube_maze_main() {
-    int map[MAP_SIZE][MAP_SIZE] = {
+    /*int map[MAP_SIZE][MAP_SIZE] = {
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 1, 0, 9, 9, 9},
@@ -303,7 +303,9 @@ void cube_maze_main() {
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 1, 1, 1, 9, 9, 9}
-    };
+    };*/
+    int map[MAP_SIZE][MAP_SIZE];
+    deCompress(28558319943680, map);
     // 调用solve函数寻找解路径
     auto startTime = chrono::steady_clock::now();
     vector<int> result = solve(map);
