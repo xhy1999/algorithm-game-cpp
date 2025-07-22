@@ -117,7 +117,13 @@ long long get_time() {
 //}
 //
 int main() {
-    //cube_1d_main();
-    cube_maze_main();
+    //cube_maze_main();
+    long long startTime = get_time();
+    std::cout << std::to_string(startTime) << std::endl;
+    char var1[] = "2,6b,40,20,0,4,1";
+    char* var2 = new char[2048];
+    one_line_main(var1, var2);
+    std::cout << std::to_string(get_time() - startTime) << std::endl;
+    system("pause");
 	return 1;
 }

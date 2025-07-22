@@ -77,8 +77,8 @@ static void deCompress(uint64_t val, int map[MAP_SIZE][MAP_SIZE]) {
 /************** 数组相关方法 **************/
 
 static void array_copy(const int src[MAP_SIZE][MAP_SIZE], int target[MAP_SIZE][MAP_SIZE]) {
-    for (int i = 0; i < 9; ++i)
-        for (int j = 0; j < 9; ++j)
+    for (int i = 0; i < MAP_SIZE; ++i)
+        for (int j = 0; j < MAP_SIZE; ++j)
             target[i][j] = src[i][j];
 }
 
@@ -129,11 +129,7 @@ static bool isReverse(const std::vector<int> path, int move) {
     }
     int last = path.back();
     //操作的索引一样,同时为逆操作14/23
-    bool res = ((getOpIndex(last) == getOpIndex(move))) && (getOp(last) + getOp(move) == 3);
-    /*if (res) {
-        System.out.println("反操作:" + last + "," + move);
-    }*/
-    return res;
+    return ((getOpIndex(last) == getOpIndex(move))) && (getOp(last) + getOp(move) == 3);
 }
 
 //选定行左移 row为索引
@@ -192,12 +188,6 @@ static bool canColDown(int map[MAP_SIZE][MAP_SIZE], int col) {
     return map[MAP_INDEX_START - 1][col] != EMPTY;
 }
 
-static void release(CubeMap& cubeMap) {
-    // 清空路径并回收内存
-    cubeMap.opPath.clear();
-    cubeMap.opPath.shrink_to_fit();
-}
-
 //优先队列,按f值排序
 std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
 //用于存储已访问状态的压缩序列化字符串
@@ -217,15 +207,11 @@ static std::vector<int> solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
         //取出当前f值最小的状态
         CubeMap curr = pq.top();
         pq.pop();
-        //array_print(curr.map);
         if (nodesExpanded++ % 100000 == 0) {
             auto now = chrono::steady_clock::now();
             auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
             cout << "已计算" << nodesExpanded << "条路径,耗时:" << duration << "ms" << endl;
         }
-        /*if (nodesExpanded == 5) {
-            exit(0);
-        }*/
         //如果已达目标状态，返回路径
         if (curr.h == 0) {
             return curr.opPath;
@@ -242,7 +228,6 @@ static std::vector<int> solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
         }*/
         //判断总目标是否足够
         if (curr.targetNum() < 9) {
-            curr.release();
             continue;
         }
         //尝试对第3~5行进行左右移动
@@ -302,7 +287,6 @@ static std::vector<int> solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 }
             }
         }
-        curr.release();
     }
     //未找到解
     return {};
@@ -324,8 +308,8 @@ void cube_maze_main() {
     auto startTime = chrono::steady_clock::now();
     vector<int> result = solve(map);
 
-    //std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
-    //std::unordered_set<uint64_t>().swap(visited);
+    std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
+    std::unordered_set<uint64_t>().swap(visited);
 
     auto endTime = chrono::steady_clock::now();
     if (!result.empty()) {
