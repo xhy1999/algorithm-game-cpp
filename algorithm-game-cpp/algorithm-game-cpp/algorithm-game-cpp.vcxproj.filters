@@ -101,5 +101,8 @@
     <ClInclude Include="CubeMaze.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="bloom_filter.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

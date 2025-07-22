@@ -36,37 +36,43 @@ const int MAP_INDEX_END = 5;
 //最大搜索步数
 const int MAX_DEPTH = 15;
 
-
-int map_get(int** arr, int var0, int var1);
-int** map_copy(int** map);
-void map_delete(int** arr);
-void cube_maze_main();
-
 struct CubeMap {
 
     //当前地图
-    int** gameMap;
+    int map[MAP_SIZE][MAP_SIZE];
     //当前步数(从起点到此状态)
     int step;
     //启发值(中心区域与目标的偏差程度)
     int h;
     //到达此状态的路径记录,格式为:数字(操作行/列的索引)+数字(0[上]1[右]2[下]3[左])
     //一个16进制数字 高2位(操作行/列的索引,0-2,左到右,上到下) 低2位(0[上]1[右]2[下]3[左])
-    std::vector<int> opPath;
+    //std::vector<int> opPath;
+    int* opPath;    // 动态分配的数组
+    int opPathLen;  // 当前路径长度
 
-    CubeMap(int** src, int step_, int h_, const std::vector<int>& path, int addPath) {
-        this->gameMap = map_copy(src);
+    CubeMap(const int src[9][9], int step_, int h_, const int* path, int pathLen, int newOp) {
+        // 拷贝地图
+        for (int i = 0; i < 9; ++i)
+            for (int j = 0; j < 9; ++j)
+                this->map[i][j] = src[i][j];
         this->step = step_;
         this->h = h_;
-        this->opPath = path;
-        if (addPath != NULL) {
-            this->opPath.push_back(addPath);
+        // 分配数组
+        opPath = new int[15];
+        opPathLen = pathLen;
+        // 复制旧路径
+        for (int i = 0; i < opPathLen && i < 15; ++i)
+            opPath[i] = path[i];
+
+        if (newOp != NULL) {
+            opPath[opPathLen] = newOp;
+            opPathLen++;
         }
     }
 
     void release() {
-        std::vector<int>().swap(opPath);
-        map_delete(gameMap);
+        //std::vector<int>().swap(opPath);
+        delete[] opPath;
     }
 
     //A* 算法中的 f(n) = g(n) + h(n)
@@ -77,7 +83,7 @@ struct CubeMap {
         int num = 0;
         for (int i = MAP_START; i < MAP_SIZE; i++) {
             for (int j = MAP_START; j < MAP_SIZE; j++) {
-                if (map_get(gameMap, i, j) == TARGET) {
+                if (map[i][j] == TARGET) {
                     num++;
                 }
             }
@@ -92,3 +98,5 @@ struct CubeMap {
     }
 
 };
+
+void cube_maze_main();

@@ -160,6 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArrayUtils.h" />
+    <ClInclude Include="bloom_filter.hpp" />
     <ClInclude Include="Cube1D.h" />
     <ClInclude Include="CubeMapEntity.h" />
     <ClInclude Include="CubeMaze.h" />
