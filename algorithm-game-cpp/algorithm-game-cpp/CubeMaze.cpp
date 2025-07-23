@@ -15,11 +15,8 @@
 
 using namespace std;
 
-//节点扩展计数器
-static int nodesExpanded = 0;
-//记录搜索开始时间
-chrono::steady_clock::time_point startTime;
 
+/************** 地图压缩相关方法 **************/
 
 //压缩地图 EMPTY会被压缩为OTHER
 static uint64_t compress(const int map[MAP_SIZE][MAP_SIZE]) {
@@ -44,7 +41,6 @@ static uint64_t compress(const int map[MAP_SIZE][MAP_SIZE]) {
     }
     return val;
 }
-
 
 //解压地图 不区分EMPTY
 static void deCompress(uint64_t val, int map[MAP_SIZE][MAP_SIZE]) {
@@ -242,6 +238,11 @@ static bool canColDown(int map[MAP_SIZE][MAP_SIZE], int col) {
     return map[MAP_INDEX_START - 1][col] != EMPTY;
 }
 
+
+//节点扩展计数器
+static int nodesExpanded = 0;
+//记录搜索开始时间
+chrono::steady_clock::time_point startTime;
 //优先队列,按f值排序
 std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
 //用于存储已访问状态的压缩序列化字符串
@@ -258,7 +259,7 @@ static CubeMap solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
     for (int i = 0; i < 15; ++i)
         init[i] = 0;
 
-    pq.push(CubeMap(startGrid, 0, h0, *init, 0, NULL));
+    pq.push(CubeMap(startGrid, 0, h0, *init, NULL));
     //重置计数器
     nodesExpanded = 0;
     //记录开始时间
@@ -307,9 +308,9 @@ static CubeMap solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 moveRowLeft(curr.map, i, leftMap);
                 uint64_t keyLeft = compress(leftMap);
                 //没有计算左移后的地图,且不是上一步的逆操作
-                if (!visited->contains(keyLeft) && !isReverse(curr.opPath, curr.opPathLen, op)) {
+                if (!visited->contains(keyLeft) && !isReverse(curr.opPath, curr.step, op)) {
                     visited->insert(keyLeft);
-                    pq.push(CubeMap(leftMap, curr.step + 1, heuristic(leftMap), curr.opPath, curr.opPathLen, op));
+                    pq.push(CubeMap(leftMap, curr.step + 1, heuristic(leftMap), curr.opPath, op));
                 }
             }
             //右移
@@ -318,9 +319,9 @@ static CubeMap solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int rightMap[MAP_SIZE][MAP_SIZE];
                 moveRowRight(curr.map, i, rightMap);
                 uint64_t keyRight = compress(rightMap);
-                if (!visited->contains(keyRight) && !isReverse(curr.opPath, curr.opPathLen, op)) {
+                if (!visited->contains(keyRight) && !isReverse(curr.opPath, curr.step, op)) {
                     visited->insert(keyRight);
-                    pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), curr.opPath, curr.opPathLen, op));
+                    pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), curr.opPath, op));
                 }
             }
         }
@@ -332,9 +333,9 @@ static CubeMap solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int upMap[MAP_SIZE][MAP_SIZE];
                 moveColUp(curr.map, j, upMap);
                 uint64_t keyUp = compress(upMap);
-                if (!visited->contains(keyUp) && !isReverse(curr.opPath, curr.opPathLen, op)) {
+                if (!visited->contains(keyUp) && !isReverse(curr.opPath, curr.step, op)) {
                     visited->insert(keyUp);
-                    pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), curr.opPath, curr.opPathLen, op));
+                    pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), curr.opPath, op));
                 }
             }
             //下移
@@ -343,16 +344,16 @@ static CubeMap solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int downMap[MAP_SIZE][MAP_SIZE];
                 moveColDown(curr.map, j, downMap);
                 uint64_t keyDown = compress(downMap);
-                if (!visited->contains(keyDown) && !isReverse(curr.opPath, curr.opPathLen, op)) {
+                if (!visited->contains(keyDown) && !isReverse(curr.opPath, curr.step, op)) {
                     visited->insert(keyDown);
-                    pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), curr.opPath, curr.opPathLen, op));
+                    pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), curr.opPath, op));
                 }
             }
         }
         curr.release();
     }
     //未找到解
-    return CubeMap(startGrid, 0, h0, *init, 0, NULL);
+    return CubeMap(startGrid, 0, h0, *init, NULL);
 }
 
 void random_map(int res[MAP_SIZE][MAP_SIZE]) {
@@ -414,7 +415,7 @@ void convert_map(const int src[MAP_SIZE][MAP_SIZE], int targetMap[MAP_SIZE][MAP_
 }
 
 void cube_maze_main() {
-    int map[MAP_SIZE][MAP_SIZE];
+    //int map[MAP_SIZE][MAP_SIZE];
     /*map[MAP_SIZE][MAP_SIZE] = {
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
@@ -449,7 +450,18 @@ void cube_maze_main() {
         return;
     }
 
-    random_map(map);
+    //random_map(map);
+    int map[MAP_SIZE][MAP_SIZE] = {
+        {9, 9, 9, 4, 6, 6, 9, 9, 9},
+        {9, 9, 9, 2, 3, 6, 9, 9, 9},
+        {9, 9, 9, 3, 4, 2, 9, 9, 9},
+        {2, 5, 2, 3, 3, 2, 3, 3, 5},
+        {4, 6, 5, 4, 5, 4, 5, 5, 2},
+        {2, 3, 3, 4, 6, 5, 4, 2, 5},
+        {9, 9, 9, 6, 6, 2, 9, 9, 9},
+        {9, 9, 9, 3, 4, 4, 9, 9, 9},
+        {9, 9, 9, 5, 6, 6, 9, 9, 9}
+    };
     array_print(map);
     //deCompress(28558319943680, map);
     int calPathNum = 0;
@@ -472,18 +484,13 @@ void cube_maze_main() {
         calPathNum += nodesExpanded;
         cout << "计算路径:" << nodesExpanded << endl;
         cout << "pq:" << pq.size() << endl;
-        //cout << "visited:" << visited.size() << endl;
-        if (result.opPathLen > 0) {
+        if (result.step > 0) {
             cout << "有解!!!!!!!!!" << endl;
-            for (int i = 0; i < 15; ++i) {
+            for (int i = 0; i < result.step; i++) {
                 std::cout << result.opPath[i] << " ";
             }
             std::cout << std::endl;
         }
-        /*for (int i = 0; i < 15; ++i) {
-            std::cout << result[i] << " ";
-        }
-        std::cout << std::endl;*/
     }
     std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
     //std::unordered_set<uint64_t>().swap(visited);

@@ -47,32 +47,33 @@ struct CubeMap {
     //到达此状态的路径记录,格式为:数字(操作行/列的索引)+数字(0[上]1[右]2[下]3[左])
     //一个16进制数字 高2位(操作行/列的索引,0-2,左到右,上到下) 低2位(0[上]1[右]2[下]3[左])
     //std::vector<int> opPath;
-    int* opPath;    // 动态分配的数组
-    int opPathLen;  // 当前路径长度
+    //到达此状态的路径记录
+    int* opPath;
 
-    CubeMap(const int src[9][9], int step_, int h_, const int* path, int pathLen, int newOp) {
-        // 拷贝地图
-        for (int i = 0; i < 9; ++i)
-            for (int j = 0; j < 9; ++j)
+    CubeMap(const int src[9][9], int step_, int h_, const int* path_, int newOp) {
+        //拷贝地图
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
                 this->map[i][j] = src[i][j];
+            }
+        }
         this->step = step_;
         this->h = h_;
-        // 分配数组
+        //分配数组
         opPath = new int[15];
-        opPathLen = pathLen;
-        // 复制旧路径
-        for (int i = 0; i < opPathLen && i < 15; ++i)
-            opPath[i] = path[i];
-
+        //复制旧路径
+        for (int i = 0; i < this->step && i < 15; i++) {
+            opPath[i] = path_[i];
+        }
         if (newOp != NULL) {
-            opPath[opPathLen] = newOp;
-            opPathLen++;
+            opPath[this->step] = newOp;
         }
     }
 
     void release() {
         //std::vector<int>().swap(opPath);
         delete[] opPath;
+        opPath = nullptr;
     }
 
     //A* 算法中的 f(n) = g(n) + h(n)
