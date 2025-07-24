@@ -184,7 +184,11 @@ void GO(MapInfo& mapInfo, int startY, int startX, int deep) {
         int max = GetMaxPathTraversed(oldMap);
         if (max > maxPathTraversed) {
             maxPathTraversed = max;
-            MapInfo saveMapInfo = mapInfo;
+            MapInfo saveMapInfo;
+            //深拷贝
+            saveMapInfo.gameMap = array_copy(oldMap);
+            //vector 会自动复制内容
+            saveMapInfo.path = mapInfo.path;
             mapInfoList.push_back(saveMapInfo);
         }
     }
