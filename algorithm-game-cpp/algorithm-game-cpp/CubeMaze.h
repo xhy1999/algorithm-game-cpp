@@ -12,11 +12,11 @@ const int TARGET = 1;
 //非目标
 const int OTHER = 0;
 
-//(0[上]1[右]2[下]3[左])
+//(0[上]1[右]2[左]3[下])
 const int OP_UP = 0;
 const int OP_RIGHT = 1;
-const int OP_DOWN = 2;
-const int OP_LEFT = 3;
+const int OP_LEFT = 2;
+const int OP_DOWN = 3;
 
 //(操作行/列的索引,0-2,左到右,上到下)
 const int OP_INDEX_3 = 0;

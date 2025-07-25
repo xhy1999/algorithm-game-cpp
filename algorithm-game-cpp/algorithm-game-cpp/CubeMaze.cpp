@@ -356,6 +356,285 @@ static CubeMap solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
     return CubeMap(startGrid, 0, h0, *init, NULL);
 }
 
+static int heuristic(int** map) {
+    int mismatch = 0;
+    for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
+        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+            if (map_get(map, i, j) != TARGET) {
+                mismatch += 1;
+            }
+        }
+    }
+    return mismatch;
+}
+
+int target_num(int** map) {
+    int num = 0;
+    for (int i = MAP_START; i < MAP_SIZE; i++) {
+        for (int j = MAP_START; j < MAP_SIZE; j++) {
+            if (map_get(map, i, j) == TARGET) {
+                num++;
+            }
+        }
+    }
+    return num;
+}
+
+//int map_get2(int** arr, int var0, int var1) {
+//    return *(arr[var0] + var1);
+//}
+inline int map_get2(int** map, int i, int j) {
+    return map[i][j];
+}
+
+static int count_empty(int** map, int rowStart, int colStart, int rowEnd, int colEnd) {
+    int count = 0;
+    for (int i = rowStart; i < rowEnd; i++) {
+        for (int j = colStart; j < colEnd; j++) {
+            if (map_get2(map, i, j) == EMPTY) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+bool print = false;
+static uint64_t compress(int** map) {
+    uint64_t val = 0;
+
+    // 上3行中心3列
+    for (int i = MAP_START; i < MAP_INDEX_START; i++) {
+        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+            int cell = map_get2(map, i, j);
+            val = (val << 1) | ((cell == EMPTY ? 0 : cell) & 1);
+        }
+    }
+
+    // 中间3行全9列
+    for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
+        for (int j = MAP_START; j <= MAP_END; j++) {
+            int cell = map_get2(map, i, j);
+            val = (val << 1) | ((cell == EMPTY ? 0 : cell) & 1);
+        }
+    }
+
+    // 下3行中心3列
+    for (int i = MAP_INDEX_END + 1; i < MAP_SIZE; i++) {
+        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+            int cell = map_get2(map, i, j);
+            val = (val << 1) | ((cell == EMPTY ? 0 : cell) & 1);
+        }
+    }
+    if (print) {
+        cout << val << endl;
+    }
+
+    // 四个方向 EMPTY 数量（4x3x3）
+    int topEmpty = count_empty(map, 0, 3, 3, 6);    // 上 3x3
+    int leftEmpty = count_empty(map, 3, 0, 6, 3);    // 左 3x3
+    int rightEmpty = count_empty(map, 3, 6, 6, 9);    // 右 3x3
+    int bottomEmpty = count_empty(map, 6, 3, 9, 6);    // 下 3x3
+
+    // 拼入 16 位辅助信息
+    val = (val << 4) | (topEmpty & 0xF);
+    if (print) {
+        cout << val << endl;
+    }
+    val = (val << 4) | (leftEmpty & 0xF);
+    if (print) {
+        cout << val << endl;
+    }
+    val = (val << 4) | (rightEmpty & 0xF);
+    if (print) {
+        cout << val << endl;
+    }
+    val = (val << 4) | (bottomEmpty & 0xF);
+    if (print) {
+        cout << val << endl;
+    }
+
+    return val;
+}
+
+//选定行左移 row为索引
+static int** moveRowLeft(int** map, int row) {
+    int** newMap = map_copy(map);
+    for (int j = MAP_START; j < MAP_END; j++) {
+        map_set(newMap, row, j, map_get(map, row, j + 1));
+    }
+    map_set(newMap, row, MAP_END, EMPTY);
+    return newMap;
+}
+
+//判断选定行能否左移
+static bool canRowLeft(int** map, int row) {
+    return map_get(map, row, MAP_INDEX_END + 1) != EMPTY;
+}
+
+//选定行右移 row为索引
+static int** moveRowRight(int** map, int row) {
+    int** newMap = map_copy(map);
+    for (int j = MAP_END; j > MAP_START; j--) {
+        map_set(newMap, row, j, map_get(map, row, j - 1));
+    }
+    map_set(newMap, row, MAP_START, EMPTY);
+    return newMap;
+}
+
+//判断选定行能否右移
+static bool canRowRight(int** map, int row) {
+    return map_get(map, row, MAP_INDEX_START - 1) != EMPTY;
+}
+
+//选定列上移 col为索引
+static int** moveColUp(int** map, int col) {
+    int** newMap = map_copy(map);
+    for (int i = MAP_START; i < MAP_END; i++) {
+        map_set(newMap, i, col, map_get(map, i + 1, col));
+    }
+    map_set(newMap, MAP_END, col, EMPTY);
+    return newMap;
+}
+
+//判断选定列能否上移
+static bool canColUp(int** map, int col) {
+    return map_get(map, MAP_INDEX_END + 1, col) != EMPTY;
+}
+
+//选定列下移
+static int** moveColDown(int** map, int col) {
+    int** newMap = map_copy(map);
+    for (int i = MAP_END; i > MAP_START; i--) {
+        map_set(newMap, i, col, map_get(map, i - 1, col));
+    }
+    map_set(newMap, MAP_START, col, EMPTY);
+    return newMap;
+}
+
+//判断选定列能否下移
+static bool canColDown(int** map, int col) {
+    return map_get(map, MAP_INDEX_START - 1, col) != EMPTY;
+}
+
+//剪枝:判断当前操作是否是上一步的反操作
+static bool isReverse(const std::vector<int> path, int move) {
+    if (path.empty()) {
+        return false;
+    }
+    int last = path.back();
+    //操作的索引一样,同时为逆操作14/23
+    bool res = ((getOpIndex(last) == getOpIndex(move))) && (getOp(last) + getOp(move) == 3);
+    return res;
+}
+
+std::vector<int> result;
+
+bool dfs(int** map, int step) {
+    if (++nodesExpanded % 100000 == 0) {
+        auto now = chrono::steady_clock::now();
+        auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
+        cout << "已计算" << nodesExpanded << "条路径,耗时:" << duration << "ms" << endl;
+    }
+    if (result.size() >= 2 && result.at(0) == 6) {
+        cout << "到这里了" << endl;
+        exit(1);
+    }
+    int h = heuristic(map);
+    if (h == 0) {
+        return true;
+    }
+    //步数下限剪枝
+    if (step + h > MAX_DEPTH) {
+        //System.out.println("剩余步数无法满足条件");
+        return false;
+    }
+    //超过最大步数
+    if (step >= MAX_DEPTH) {
+        //System.out.println("超过最大步数");
+        return false;
+    }
+    if (target_num(map) < 9) {
+        return false;
+    }
+    if (!result.empty() && result.at(0) == 6) {
+        print = true;
+    }
+    long key = compress(map);
+    if (!result.empty() && result.at(0) == 6) {
+        cout << result.at(0) << endl;
+        cout << "压缩结果: " << to_string(key)<< endl;
+        exit(1);
+    }
+    if (visited->contains(key)) {
+        return false;
+    }
+    visited->insert(key);
+    for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
+        // 左移
+        if (canRowLeft(map, i)) {
+            int** newMap = moveRowLeft(map, i);
+            int op = ((i - 3) << 2) | OP_LEFT;
+            if (!isReverse(result, op)) {
+                result.push_back(op);
+                if (dfs(newMap, step + 1)) {
+                    return true;
+                }
+                result.pop_back(); // 回溯
+            }
+            map_delete(newMap);
+        }
+        // 右移
+        if (canRowRight(map, i)) {
+            int** newMap = moveRowRight(map, i);
+            int op = ((i - 3) << 2) | OP_RIGHT;
+            if (!isReverse(result, op)) {
+                result.push_back(op);
+                if (dfs(newMap, step + 1)) {
+                    return true;
+                }
+                result.pop_back();
+            }
+            map_delete(newMap);
+        }
+    }
+    for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+        // 上移
+        if (canColUp(map, j)) {
+            int** newMap = moveColUp(map, j);
+            int op = ((j - 3) << 2) | OP_UP;
+            if (!isReverse(result, op)) {
+                result.push_back(op);
+                if (dfs(newMap, step + 1)) {
+                    return true;
+                }
+                result.pop_back();
+            }
+            map_delete(newMap);
+        }
+        // 下移
+        if (canColDown(map, j)) {
+            int** newMap = moveColDown(map, j);
+            int op = ((j - 3) << 2) | OP_DOWN;
+            if (!isReverse(result, op)) {
+                result.push_back(op);
+                if (dfs(newMap, step + 1)) {
+                    return true;
+                }
+                result.pop_back();
+            }
+            map_delete(newMap);
+        }
+    }
+    return false;
+}
+
+
+
+
+
+
+
+
 void random_map(int res[MAP_SIZE][MAP_SIZE]) {
     //首先将所有元素初始化为9
     for (int i = 0; i < MAP_SIZE; i++) {
@@ -414,19 +693,37 @@ void convert_map(const int src[MAP_SIZE][MAP_SIZE], int targetMap[MAP_SIZE][MAP_
     }
 }
 
+int** convert_map(const int src[MAP_SIZE][MAP_SIZE], int target) {
+    int** map = map_init(EMPTY);
+    for (int i = MAP_START; i < MAP_SIZE; i++) {
+        for (int j = MAP_START; j < MAP_SIZE; j++) {
+            if (src[i][j] == EMPTY) {
+                map_set(map, i, j, EMPTY);
+            }
+            else if (src[i][j] == target) {
+                map_set(map, i, j, 1);
+            }
+            else {
+                map_set(map, i, j, 0);
+            }
+        }
+    }
+    return map;
+}
+
 void cube_maze_main() {
     //int map[MAP_SIZE][MAP_SIZE];
-    /*map[MAP_SIZE][MAP_SIZE] = {
+    /*int map[MAP_SIZE][MAP_SIZE] = {
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 1, 0, 9, 9, 9},
-                {0, 0, 0, 0, 0, 1, 0, 1, 0},
-                {1, 0, 0, 0, 0, 0, 0, 0, 1},
-                {1, 0, 0, 0, 0, 0, 0, 0, 1},
+                {0, 0, 0, 0, 0, 1, 1, 1, 0},
+                {1, 0, 0, 0, 0, 1, 1, 1, 1},
+                {1, 0, 0, 0, 0, 1, 1, 1, 1},
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 1, 1, 1, 9, 9, 9}
-    }; */
+    };*/
     bloom_parameters parameters;
     parameters.projected_element_count = 5000000;
     parameters.false_positive_probability = 0.01;
@@ -462,13 +759,13 @@ void cube_maze_main() {
         {9, 9, 9, 3, 4, 4, 9, 9, 9},
         {9, 9, 9, 5, 6, 6, 9, 9, 9}
     };
+    deCompress(1381637390368, map);
     array_print(map);
-    //deCompress(28558319943680, map);
     int calPathNum = 0;
     vector<int> resList;
     bool optimal = false;
     auto startTime = chrono::steady_clock::now();
-    for (int i = 2; i <= 6; i++) {
+    for (int i = 1; i <= 1; i++) {
         std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
         std::vector<CubeMap> baseVec;
         baseVec.reserve(100000);
@@ -476,22 +773,38 @@ void cube_maze_main() {
             std::greater<CubeMap>(), std::move(baseVec));
         //std::unordered_set<uint64_t>().swap(visited);
         //visited.reserve(1 << 21);// 等价于 reserve(1048576)
-        int calcMap[MAP_SIZE][MAP_SIZE];
-        convert_map(map, calcMap, i);
-        array_print(calcMap);
+        //int calcMap[MAP_SIZE][MAP_SIZE];
+        //convert_map(map, calcMap, i);
+        //array_print(calcMap);
         //调用solve函数寻找解路径
-        CubeMap result = solve(calcMap);
-        calPathNum += nodesExpanded;
-        cout << "计算路径:" << nodesExpanded << endl;
-        cout << "pq:" << pq.size() << endl;
-        if (result.step > 0) {
+        //CubeMap result = solve(calcMap);
+        //calPathNum += nodesExpanded;
+        //cout << "计算路径:" << nodesExpanded << endl;
+        //cout << "pq:" << pq.size() << endl;
+        //if (result.step > 0) {
+        //    cout << "有解!!!!!!!!!" << endl;
+        //    for (int i = 0; i < result.step; i++) {
+        //        std::cout << result.opPath[i] << " ";
+        //    }
+        //    std::cout << std::endl;
+        //}
+
+        int** calcMap = convert_map(map, i);
+        std::cout << compress(calcMap) << std::endl;
+        std::cout << "开始计算" << std::endl;
+        map_print(calcMap);
+        std::cout << std::endl;
+        dfs(calcMap, 0);
+        if (!result.empty()) {
             cout << "有解!!!!!!!!!" << endl;
-            for (int i = 0; i < result.step; i++) {
-                std::cout << result.opPath[i] << " ";
+            for (int i = 0; i < result.size(); i++) {
+                std::cout << result[i] << " ";
             }
             std::cout << std::endl;
+            resList = result;
         }
     }
+    cout << "计算节点数: " << nodesExpanded << endl;
     std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
     //std::unordered_set<uint64_t>().swap(visited);
     auto endTime = chrono::steady_clock::now();
