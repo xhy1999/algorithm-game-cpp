@@ -39,48 +39,58 @@ const int MAX_DEPTH = 15;
 struct CubeMap {
 
     //当前地图
-    int** map;
+    int map[MAP_SIZE][MAP_SIZE];
     //当前步数(从起点到此状态)
     int step;
     //启发值(中心区域与目标的偏差程度)
     int h;
     //到达此状态的路径记录,格式为:数字(操作行/列的索引)+数字(0[上]1[右]2[下]3[左])
     //一个16进制数字 高2位(操作行/列的索引,0-2,左到右,上到下) 低2位(0[上]1[右]2[下]3[左])
-    //std::vector<int> opPath;
+    std::vector<int> opPath;
     //到达此状态的路径记录
-    int* opPath;
+    //int* opPath;
 
-    CubeMap(int** map_, int step_, int h_, int* path_, int newOp) {
-        this->map = map_;
+    CubeMap(const int src[9][9], int step_, int h_, std::vector<int> path_, int newOp) {
+        //拷贝地图
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                this->map[i][j] = src[i][j];
+            }
+        }
         this->step = step_;
         this->h = h_;
         //分配数组
-        opPath = new int[15];
+        opPath = path_;
         //复制旧路径
-        for (int i = 0; i < this->step && i < 15; i++) {
+        /*for (int i = 0; i < this->step && i < 15; i++) {
             opPath[i] = path_[i];
-        }
+        }*/
         if (newOp != NULL) {
-            opPath[this->step] = newOp;
+            opPath.push_back(newOp);
         }
     }
 
     void release() {
-        //std::vector<int>().swap(opPath);
-        //释放path
-        delete[] opPath;
-        opPath = nullptr;
-        //释放map
-        for (int i = 0; i < MAP_SIZE; ++i) {
-            delete[] map[i];
-            map[i] = NULL;
-        }
-        delete[] map;
-        map = NULL;
+        std::vector<int>().swap(opPath);
+        //delete[] opPath;
+        //opPath = nullptr;
     }
 
     //A* 算法中的 f(n) = g(n) + h(n)
     int f() const { return step + h; }
+
+    //获取地图中所有目标数量
+    int targetNum() const {
+        int num = 0;
+        for (int i = MAP_START; i < MAP_SIZE; i++) {
+            for (int j = MAP_START; j < MAP_SIZE; j++) {
+                if (map[i][j] == TARGET) {
+                    num++;
+                }
+            }
+        }
+        return num;
+    }
 
     //运算符重载：priority_queue 默认是"大顶堆"
     //为实现"小顶堆",我们让f小的优先,需重载 >
