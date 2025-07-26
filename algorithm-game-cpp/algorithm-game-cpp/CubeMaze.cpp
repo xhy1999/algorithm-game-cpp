@@ -447,8 +447,89 @@ chrono::steady_clock::time_point startTime;
 static int node_num_a_star = 0;
 //优先队列,按f值排序
 std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
+CubeMap result = { NULL, 0, NULL, NULL, NULL };
 bool a_star_main(CubeMap& curr) {
-
+    //计算过多剪枝 防止内存问题
+    /*if (node_num_a_star >= 1000000) {
+        return {};
+    }*/
+    if (node_num_a_star++ % 100000 == 0) {
+        auto now = chrono::steady_clock::now();
+        auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
+        cout << "已计算" << node_num_a_star << "条路径,pq:" << pq.size() << ",耗时:" << duration << "ms" << endl;
+    }
+    //如果已达目标状态，返回路径
+    if (curr.h == 0) {
+        //curr.release();
+        result = curr;
+        return true;
+    }
+    //步数下限剪枝
+    if (curr.step + curr.h > MAX_DEPTH) {
+        curr.release();
+        return false;
+    }
+    //超过最大步数
+    if (curr.step >= MAX_DEPTH) {
+        curr.release();
+        return false;
+    }
+    //判断总目标是否足够
+    if (target_num(curr.map) < 9) {
+        curr.release();
+        return false;
+    }
+    //尝试对第3~5行进行左右移动
+    for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
+        //左移
+        if (canRowLeft(curr.map, i)) {
+            //生成操作
+            int op = ((i - 3) << 2) | OP_LEFT;
+            //生成左移后的地图
+            int** leftMap = moveRowLeft(curr.map, i);
+            uint64_t keyLeft = compress(leftMap);
+            //没有计算左移后的地图,且不是上一步的逆操作
+            if (!visited->contains(keyLeft) && !isReverse(curr.opPath, curr.step, op)) {
+                visited->insert(keyLeft);
+                pq.push(CubeMap(leftMap, curr.step + 1, heuristic(leftMap), curr.opPath, op));
+            }
+        }
+        //右移
+        if (canRowRight(curr.map, i)) {
+            int op = ((i - 3) << 2) | OP_RIGHT;
+            int** rightMap = moveRowRight(curr.map, i);
+            uint64_t keyRight = compress(rightMap);
+            if (!visited->contains(keyRight) && !isReverse(curr.opPath, curr.step, op)) {
+                visited->insert(keyRight);
+                pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), curr.opPath, op));
+            }
+        }
+    }
+    //尝试对第3~5列进行上下移动
+    for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+        //上移
+        if (canColUp(curr.map, j)) {
+            int op = ((j - 3) << 2) | OP_UP;
+            int** upMap = moveColUp(curr.map, j);
+            uint64_t keyUp = compress(upMap);
+            if (!visited->contains(keyUp) && !isReverse(curr.opPath, curr.step, op)) {
+                visited->insert(keyUp);
+                pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), curr.opPath, op));
+            }
+        }
+        //下移
+        if (canColDown(curr.map, j)) {
+            int op = ((j - 3) << 2) | OP_DOWN;
+            int** downMap = moveColDown(curr.map, j);
+            uint64_t keyDown = compress(downMap);
+            if (!visited->contains(keyDown) && !isReverse(curr.opPath, curr.step, op)) {
+                visited->insert(keyDown);
+                pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), curr.opPath, op));
+            }
+        }
+    }
+    curr.release();
+    return false;
 }
 
 static CubeMap a_star(int** startGrid) {
@@ -467,86 +548,9 @@ static CubeMap a_star(int** startGrid) {
         //取出当前f值最小的状态
         CubeMap curr = pq.top();
         pq.pop();
-
-        //计算过多剪枝 防止内存问题
-        /*if (node_num_a_star >= 1000000) {
-            return {};
-        }*/
-        if (node_num_a_star++ % 100000 == 0) {
-            auto now = chrono::steady_clock::now();
-            auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
-            cout << "已计算" << node_num_a_star << "条路径,pq:" << pq.size() << ",耗时:" << duration << "ms" << endl;
-        }
-        //如果已达目标状态，返回路径
-        if (curr.h == 0) {
-            //curr.release();
+        if (a_star_main(curr)) {
             return curr;
         }
-        //步数下限剪枝
-        if (curr.step + curr.h > MAX_DEPTH) {
-            curr.release();
-            continue;
-        }
-        //超过最大步数
-        if (curr.step >= MAX_DEPTH) {
-            curr.release();
-            continue;
-        }
-        //判断总目标是否足够
-        if (target_num(curr.map) < 9) {
-            curr.release();
-            continue;
-        }
-        //尝试对第3~5行进行左右移动
-        for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
-            //左移
-            if (canRowLeft(curr.map, i)) {
-                //生成操作
-                int op = ((i - 3) << 2) | OP_LEFT;
-                //生成左移后的地图
-                int** leftMap = moveRowLeft(curr.map, i);
-                uint64_t keyLeft = compress(leftMap);
-                //没有计算左移后的地图,且不是上一步的逆操作
-                if (!visited->contains(keyLeft) && !isReverse(curr.opPath, curr.step, op)) {
-                    visited->insert(keyLeft);
-                    pq.push(CubeMap(leftMap, curr.step + 1, heuristic(leftMap), curr.opPath, op));
-                }
-            }
-            //右移
-            if (canRowRight(curr.map, i)) {
-                int op = ((i - 3) << 2) | OP_RIGHT;
-                int** rightMap = moveRowRight(curr.map, i);
-                uint64_t keyRight = compress(rightMap);
-                if (!visited->contains(keyRight) && !isReverse(curr.opPath, curr.step, op)) {
-                    visited->insert(keyRight);
-                    pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), curr.opPath, op));
-                }
-            }
-        }
-        //尝试对第3~5列进行上下移动
-        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
-            //上移
-            if (canColUp(curr.map, j)) {
-                int op = ((j - 3) << 2) | OP_UP;
-                int** upMap = moveColUp(curr.map, j);
-                uint64_t keyUp = compress(upMap);
-                if (!visited->contains(keyUp) && !isReverse(curr.opPath, curr.step, op)) {
-                    visited->insert(keyUp);
-                    pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), curr.opPath, op));
-                }
-            }
-            //下移
-            if (canColDown(curr.map, j)) {
-                int op = ((j - 3) << 2) | OP_DOWN;
-                int** downMap = moveColDown(curr.map, j);
-                uint64_t keyDown = compress(downMap);
-                if (!visited->contains(keyDown) && !isReverse(curr.opPath, curr.step, op)) {
-                    visited->insert(keyDown);
-                    pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), curr.opPath, op));
-                }
-            }
-        }
-        curr.release();
     }
     //未找到解
     return CubeMap(startGrid, 0, h0, NULL, NULL);
