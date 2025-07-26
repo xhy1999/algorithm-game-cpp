@@ -12,6 +12,8 @@
 #include "ArrayUtils.h"
 #include "VectorUtils.h"
 #include "bloom_filter.hpp"
+#include <bitset>
+#include <unordered_map>
 
 using namespace std;
 
@@ -398,7 +400,42 @@ static int count_empty(int** map, int rowStart, int colStart, int rowEnd, int co
     }
     return count;
 }
-bool print = false;
+
+static uint64_t compress_old(int** map) {
+    uint64_t val = 0;
+
+    // 上3行中心3列
+    for (int i = MAP_START; i < MAP_INDEX_START; i++) {
+        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+            int cell = map_get2(map, i, j);
+            val = (val << 1) | ((cell == EMPTY ? 0 : cell) & 1);
+        }
+    }
+
+    // 中间3行全9列
+    for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
+        for (int j = MAP_START; j <= MAP_END; j++) {
+            int cell = map_get2(map, i, j);
+            val = (val << 1) | ((cell == EMPTY ? 0 : cell) & 1);
+        }
+    }
+
+    // 下3行中心3列
+    for (int i = MAP_INDEX_END + 1; i < MAP_SIZE; i++) {
+        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+            int cell = map_get2(map, i, j);
+            val = (val << 1) | ((cell == EMPTY ? 0 : cell) & 1);
+        }
+    }
+
+    // 四个方向 EMPTY 数量（4x3x3）
+    int topEmpty = count_empty(map, 0, 3, 3, 6);    // 上 3x3
+    int leftEmpty = count_empty(map, 3, 0, 6, 3);    // 左 3x3
+    int rightEmpty = count_empty(map, 3, 6, 6, 9);    // 右 3x3
+    int bottomEmpty = count_empty(map, 6, 3, 9, 6);    // 下 3x3
+
+    return val;
+}
 static uint64_t compress(int** map) {
     uint64_t val = 0;
 
@@ -425,9 +462,6 @@ static uint64_t compress(int** map) {
             val = (val << 1) | ((cell == EMPTY ? 0 : cell) & 1);
         }
     }
-    if (print) {
-        cout << val << endl;
-    }
 
     // 四个方向 EMPTY 数量（4x3x3）
     int topEmpty = count_empty(map, 0, 3, 3, 6);    // 上 3x3
@@ -437,23 +471,112 @@ static uint64_t compress(int** map) {
 
     // 拼入 16 位辅助信息
     val = (val << 4) | (topEmpty & 0xF);
-    if (print) {
-        cout << val << endl;
-    }
     val = (val << 4) | (leftEmpty & 0xF);
-    if (print) {
-        cout << val << endl;
-    }
     val = (val << 4) | (rightEmpty & 0xF);
-    if (print) {
-        cout << val << endl;
-    }
     val = (val << 4) | (bottomEmpty & 0xF);
-    if (print) {
-        cout << val << endl;
-    }
 
     return val;
+}
+
+std::string toHexString(const std::bitset<90>& bits) {
+    std::string result;
+    int totalBits = bits.size();
+
+    // 从低位开始，每四位组成一个十六进制数字
+    for (int i = 0; i < totalBits; i += 4) {
+        int val = 0;
+        for (int j = 0; j < 4; ++j) {
+            int bitIndex = i + j;
+            if (bitIndex < totalBits && bits[bitIndex]) {
+                val |= (1 << j); // 注意：低位在前
+            }
+        }
+        char hexDigit = (val < 10) ? ('0' + val) : ('A' + val - 10);
+        result.insert(result.begin(), hexDigit); // 高位在前
+    }
+
+    // 可选：去除前导0
+    size_t firstNonZero = result.find_first_not_of('0');
+    if (firstNonZero != std::string::npos) {
+        return result.substr(firstNonZero);
+    }
+    else {
+        return "0";
+    }
+}
+std::string bitsetToBase36(const std::bitset<90>& bits) {
+    // 把bitset转为二进制字符串（最高位在前）
+    std::string binary;
+    for (int i = bits.size() - 1; i >= 0; --i) {
+        binary.push_back(bits[i] ? '1' : '0');
+    }
+
+    // 模拟大整数除法，基数36
+    std::string number = binary;
+    std::string base36 = "";
+    const std::string digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    while (number != "") {
+        std::string quotient = "";
+        int remainder = 0;
+        bool started = false;
+
+        for (char c : number) {
+            int digit = remainder * 2 + (c - '0');
+            int q = digit / 36;
+            remainder = digit % 36;
+            if (q > 0 || started) {
+                quotient.push_back(q + '0');
+                started = true;
+            }
+        }
+
+        base36 = digits[remainder] + base36;
+        number = quotient;
+    }
+
+    if (base36 == "")
+        return "0";
+    return base36;
+}
+static string compress_new(int** map) {
+    std::bitset<90> bits;
+    int bitPos = 89;  // 从高位向低位设置
+
+    auto encode = [](int cell) -> int {
+        if (cell == EMPTY) return 0b00;
+        if (cell == 0)     return 0b01;
+        if (cell == 1)     return 0b10;
+        throw std::invalid_argument("未知cell值");
+        };
+
+    // 第0-2行中心3列
+    for (int i = MAP_START; i < MAP_INDEX_START; i++) {
+        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+            int code = encode(map[i][j]);
+            bits.set(bitPos--, code & 1);        // 低位
+            bits.set(bitPos--, (code >> 1) & 1); // 高位
+        }
+    }
+
+    // 第3-5行整行9列
+    for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
+        for (int j = MAP_START; j <= MAP_END; j++) {
+            int code = encode(map[i][j]);
+            bits.set(bitPos--, code & 1);
+            bits.set(bitPos--, (code >> 1) & 1);
+        }
+    }
+
+    // 第6-8行中心3列
+    for (int i = MAP_INDEX_END + 1; i < MAP_SIZE; i++) {
+        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+            int code = encode(map[i][j]);
+            bits.set(bitPos--, code & 1);
+            bits.set(bitPos--, (code >> 1) & 1);
+        }
+    }
+    return bitsetToBase36(bits); // 返回大写的十六进制字符串
 }
 
 //选定行左移 row为索引
@@ -527,20 +650,27 @@ static bool isReverse(const std::vector<int> path, int move) {
     return res;
 }
 
-std::vector<int> result;
+std::vector<std::vector<int>> result_main;
+int min_result_step = 999;
+std::vector<int> result_cache;
+//std::unordered_set<string> visited_new;
+std::unordered_map<string, int> visited_new;
 
 bool dfs(int** map, int step) {
-    if (++nodesExpanded % 100000 == 0) {
+    if (++nodesExpanded % 1000000 == 0) {
         auto now = chrono::steady_clock::now();
         auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
         cout << "已计算" << nodesExpanded << "条路径,耗时:" << duration << "ms" << endl;
     }
-    if (result.size() >= 2 && result.at(0) == 6) {
-        cout << "到这里了" << endl;
-        exit(1);
+    if (step >= min_result_step) {
+        return false;
     }
     int h = heuristic(map);
     if (h == 0) {
+        if (step < min_result_step) {
+            result_main.push_back(result_cache);
+            min_result_step = step;
+        }
         return true;
     }
     //步数下限剪枝
@@ -556,30 +686,71 @@ bool dfs(int** map, int step) {
     if (target_num(map) < 9) {
         return false;
     }
-    if (!result.empty() && result.at(0) == 6) {
+    /*if (!result.empty() && result.at(0) == 6) {
         print = true;
-    }
-    long key = compress(map);
-    if (!result.empty() && result.at(0) == 6) {
+    }*/
+    /*if (result_cache.size() >= 3 && result_cache.at(0) == 8 && result_cache.at(1) == 1
+        && result_cache.at(2) == 3) {
+        cout << "到这里了:" << endl;
+        exit(1);
+    }*/
+    //string key = compress_new(map);
+    uint64_t key = compress(map);
+    /*if (key == "A9A519AAA9AAAAA96AAA98") {
+        cout << "出现了！！！:" << step << endl;
+        map_print(map);
+    }*/
+    /*if (result_cache.size() >= 3 && result_cache.at(0) == 8 && result_cache.at(1) == 1
+        && result_cache.at(2) == 3) {
+        cout << "到这里了:" << key << endl;
+        exit(1);
+    }*/
+    //auto it = visited_new.find(key);
+    //if (it == visited_new.end()) {
+    //    //不存在
+    //    visited_new[key] = step;
+    //} else {
+    //    //存在,则判断步数
+    //    int oldStep = it->second;
+    //    if (oldStep <= step) {
+    //        return false;
+    //    } else {
+    //        visited_new[key] = step;
+    //    }
+    //}
+
+    /*if (!visited_new.insert(key).second) {
+        return false;
+    }*/
+    /*if (!result.empty() && result.at(0) == 6) {
         cout << result.at(0) << endl;
         cout << "压缩结果: " << to_string(key)<< endl;
         exit(1);
-    }
+    }*/
+    //if (key == 86976867718140161) {
+    //    cout << "86976867718140161" << endl;
+    //}
+
     if (visited->contains(key)) {
         return false;
     }
+    //if (result_cache.size() >= 3 && result_cache.at(0) == 8 && result_cache.at(1) == 1
+    //    && result_cache.at(2) == 3) {
+    //    cout << "到这里了" << endl;
+    //    exit(1);
+    //}
     visited->insert(key);
     for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
         // 左移
         if (canRowLeft(map, i)) {
             int** newMap = moveRowLeft(map, i);
             int op = ((i - 3) << 2) | OP_LEFT;
-            if (!isReverse(result, op)) {
-                result.push_back(op);
+            if (!isReverse(result_cache, op)) {
+                result_cache.push_back(op);
                 if (dfs(newMap, step + 1)) {
-                    return true;
+                    //return false;
                 }
-                result.pop_back(); // 回溯
+                result_cache.pop_back(); // 回溯
             }
             map_delete(newMap);
         }
@@ -587,12 +758,12 @@ bool dfs(int** map, int step) {
         if (canRowRight(map, i)) {
             int** newMap = moveRowRight(map, i);
             int op = ((i - 3) << 2) | OP_RIGHT;
-            if (!isReverse(result, op)) {
-                result.push_back(op);
+            if (!isReverse(result_cache, op)) {
+                result_cache.push_back(op);
                 if (dfs(newMap, step + 1)) {
-                    return true;
+                    //return false;
                 }
-                result.pop_back();
+                result_cache.pop_back();
             }
             map_delete(newMap);
         }
@@ -602,12 +773,12 @@ bool dfs(int** map, int step) {
         if (canColUp(map, j)) {
             int** newMap = moveColUp(map, j);
             int op = ((j - 3) << 2) | OP_UP;
-            if (!isReverse(result, op)) {
-                result.push_back(op);
+            if (!isReverse(result_cache, op)) {
+                result_cache.push_back(op);
                 if (dfs(newMap, step + 1)) {
-                    return true;
+                    //return false;
                 }
-                result.pop_back();
+                result_cache.pop_back();
             }
             map_delete(newMap);
         }
@@ -615,12 +786,12 @@ bool dfs(int** map, int step) {
         if (canColDown(map, j)) {
             int** newMap = moveColDown(map, j);
             int op = ((j - 3) << 2) | OP_DOWN;
-            if (!isReverse(result, op)) {
-                result.push_back(op);
+            if (!isReverse(result_cache, op)) {
+                result_cache.push_back(op);
                 if (dfs(newMap, step + 1)) {
-                    return true;
+                    //return false;
                 }
-                result.pop_back();
+                result_cache.pop_back();
             }
             map_delete(newMap);
         }
@@ -712,7 +883,7 @@ int** convert_map(const int src[MAP_SIZE][MAP_SIZE], int target) {
 }
 
 void cube_maze_main() {
-    //int map[MAP_SIZE][MAP_SIZE];
+    int map[MAP_SIZE][MAP_SIZE];
     /*int map[MAP_SIZE][MAP_SIZE] = {
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
                 {9, 9, 9, 0, 0, 0, 9, 9, 9},
@@ -747,8 +918,8 @@ void cube_maze_main() {
         return;
     }
 
-    //random_map(map);
-    int map[MAP_SIZE][MAP_SIZE] = {
+    random_map(map);
+    /*int map[MAP_SIZE][MAP_SIZE] = {
         {9, 9, 9, 4, 6, 6, 9, 9, 9},
         {9, 9, 9, 2, 3, 6, 9, 9, 9},
         {9, 9, 9, 3, 4, 2, 9, 9, 9},
@@ -758,14 +929,14 @@ void cube_maze_main() {
         {9, 9, 9, 6, 6, 2, 9, 9, 9},
         {9, 9, 9, 3, 4, 4, 9, 9, 9},
         {9, 9, 9, 5, 6, 6, 9, 9, 9}
-    };
-    deCompress(1381637390368, map);
+    };*/
+    //deCompress(1547278747744, map);
     array_print(map);
     int calPathNum = 0;
     vector<int> resList;
     bool optimal = false;
     auto startTime = chrono::steady_clock::now();
-    for (int i = 1; i <= 1; i++) {
+    for (int i = 2; i <= 6; i++) {
         std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
         std::vector<CubeMap> baseVec;
         baseVec.reserve(100000);
@@ -790,18 +961,18 @@ void cube_maze_main() {
         //}
 
         int** calcMap = convert_map(map, i);
-        std::cout << compress(calcMap) << std::endl;
         std::cout << "开始计算" << std::endl;
+        std::cout << compress_old(calcMap) << std::endl;
         map_print(calcMap);
         std::cout << std::endl;
         dfs(calcMap, 0);
-        if (!result.empty()) {
-            cout << "有解!!!!!!!!!" << endl;
-            for (int i = 0; i < result.size(); i++) {
-                std::cout << result[i] << " ";
+        if (!result_main.empty()) {
+            cout << "有解!!!!!!!!!" << result_main.size() << endl;
+            for (int i = 0; i < result_cache.size(); i++) {
+                std::cout << result_cache[i] << " ";
             }
             std::cout << std::endl;
-            resList = result;
+            resList = result_cache;
         }
     }
     cout << "计算节点数: " << nodesExpanded << endl;
