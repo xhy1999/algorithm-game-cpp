@@ -433,15 +433,15 @@ static int target_num(int** map) {
     return num;
 }
 
-//节点扩展计数器
-static int nodesExpanded = 0;
+////节点扩展计数器
+//static int nodesExpanded = 0;
+////优先队列,按f值排序
+//std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
+
+//用于存储已访问状态的压缩序列化字符串
+bloom_filter* visited = nullptr;
 //记录搜索开始时间
 chrono::steady_clock::time_point startTime;
-//优先队列,按f值排序
-std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
-//用于存储已访问状态的压缩序列化字符串
-//std::unordered_set<uint64_t> visited;
-bloom_filter* visited = nullptr;  // 全局指针存布隆过滤器
 
 //A* 搜索主逻辑
 //static CubeMap solve(int startGrid[MAP_SIZE][MAP_SIZE]) {
@@ -553,12 +553,13 @@ bloom_filter* visited = nullptr;  // 全局指针存布隆过滤器
 std::vector<std::vector<int>> result_main;
 int min_result_step = 999;
 std::vector<int> result_cache;
+static int dfs_node_num = 0;
 
 bool dfs(int** map, int step) {
-    if (++nodesExpanded % 1000000 == 0) {
+    if (++dfs_node_num % 1000000 == 0) {
         auto now = chrono::steady_clock::now();
         auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
-        cout << "已计算" << nodesExpanded << "条路径,耗时:" << duration << "ms" << endl;
+        cout << "已计算" << dfs_node_num << "条路径,耗时:" << duration << "ms" << endl;
     }
     if (step >= min_result_step) {
         return false;
@@ -689,11 +690,11 @@ void cube_maze_main() {
     auto startTime = chrono::steady_clock::now();
     for (int i = 2; i <= 6; i++) {
         //A*求解
-        std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
-        std::vector<CubeMap> baseVec;
-        baseVec.reserve(100000);
-        std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq(
-            std::greater<CubeMap>(), std::move(baseVec));
+        //std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
+        //std::vector<CubeMap> baseVec;
+        //baseVec.reserve(100000);
+        //std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq(
+        //    std::greater<CubeMap>(), std::move(baseVec));
         //std::unordered_set<uint64_t>().swap(visited);
         //visited.reserve(1 << 21);// 等价于 reserve(1048576)
         //int calcMap[MAP_SIZE][MAP_SIZE];
@@ -711,6 +712,8 @@ void cube_maze_main() {
         //    }
         //    std::cout << std::endl;
         //}
+        //std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
+        //std::unordered_set<uint64_t>().swap(visited);
 
 
         //dfs求解
@@ -724,10 +727,8 @@ void cube_maze_main() {
             cout << "有解!!!!!!!!!" << result_main.size() << endl;
             break;
         }
+        cout << "计算节点数: " << dfs_node_num << endl;
     }
-    cout << "计算节点数: " << nodesExpanded << endl;
-    std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
-    //std::unordered_set<uint64_t>().swap(visited);
     auto endTime = chrono::steady_clock::now();
     if (!result_main.empty()) {
         cout << "共有" << result_main.size() << "种解法" << endl;
