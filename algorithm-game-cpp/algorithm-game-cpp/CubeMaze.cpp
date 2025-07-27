@@ -16,8 +16,8 @@
 
 using namespace std;
 
-
 /************** 地图相关方法 **************/
+
 inline int map_get(int** map, int i, int j) {
     return map[i][j];
     //return *(map[i] + j);
@@ -26,7 +26,6 @@ inline int map_get(int** map, int i, int j) {
 inline void map_set(int** map, int i, int j, int value) {
     map[i][j] = value;
 }
-
 
 static void map_print(const int arr[MAP_SIZE][MAP_SIZE]) {
     for (int i = 0; i < MAP_SIZE; i++) {
@@ -105,7 +104,7 @@ void intss2array(int** src, int target[MAP_SIZE][MAP_SIZE]) {
 /************** 地图压缩相关方法 **************/
 
 //压缩地图 EMPTY会被压缩为OTHER 需要还原的话用这个方法压缩
-static uint64_t compress(const int map[MAP_SIZE][MAP_SIZE]) {
+static uint64_t map_compress(const int map[MAP_SIZE][MAP_SIZE]) {
     uint64_t val = 0L;
     // 第0-2行中心3列
     for (int i = MAP_START; i < MAP_INDEX_START; i++) {
@@ -129,7 +128,7 @@ static uint64_t compress(const int map[MAP_SIZE][MAP_SIZE]) {
 }
 
 //解压地图 不区分EMPTY
-static void deCompress(uint64_t val, int map[MAP_SIZE][MAP_SIZE]) {
+static void map_decompress(uint64_t val, int map[MAP_SIZE][MAP_SIZE]) {
     //初始化数组为 EMPTY
     for (int i = 0; i < MAP_SIZE; ++i) {
         for (int j = 0; j < MAP_SIZE; ++j) {
@@ -173,7 +172,7 @@ static int count_empty(int** map, int rowStart, int colStart, int rowEnd, int co
 }
 
 //计算时使用的压缩
-static uint64_t compress(int** map) {
+static uint64_t map_compress(int** map) {
     uint64_t val = 0;
     //上3行中心3列
     for (int i = MAP_START; i < MAP_INDEX_START; i++) {
@@ -210,7 +209,7 @@ static uint64_t compress(int** map) {
 }
 
 //随机生成地图
-void random_map(int res[MAP_SIZE][MAP_SIZE]) {
+void map_random(int res[MAP_SIZE][MAP_SIZE]) {
     //首先将所有元素初始化为9
     for (int i = 0; i < MAP_SIZE; i++) {
         for (int j = 0; j < MAP_SIZE; j++) {
@@ -253,7 +252,7 @@ void random_map(int res[MAP_SIZE][MAP_SIZE]) {
 }
 
 //随机生成地图
-static int** random_map() {
+static int** map_random() {
     int** map = map_init(EMPTY);
     std::vector<int> nums;
     //将 2~6 每个数字加入 9 次
@@ -293,7 +292,7 @@ static int** random_map() {
 }
 
 //转化地图 将地图的2-6转化为计算0/1/EMPTY的1
-void convert_map(const int src[MAP_SIZE][MAP_SIZE], int targetMap[MAP_SIZE][MAP_SIZE], int target) {
+void map_convert(const int src[MAP_SIZE][MAP_SIZE], int targetMap[MAP_SIZE][MAP_SIZE], int target) {
     for (int i = MAP_START; i < MAP_SIZE; i++) {
         for (int j = MAP_START; j < MAP_SIZE; j++) {
             if (src[i][j] == EMPTY) {
@@ -308,7 +307,7 @@ void convert_map(const int src[MAP_SIZE][MAP_SIZE], int targetMap[MAP_SIZE][MAP_
         }
     }
 }
-int** convert_map(const int src[MAP_SIZE][MAP_SIZE], int target) {
+int** map_convert(const int src[MAP_SIZE][MAP_SIZE], int target) {
     int** map = map_init(EMPTY);
     for (int i = MAP_START; i < MAP_SIZE; i++) {
         for (int j = MAP_START; j < MAP_SIZE; j++) {
@@ -325,7 +324,7 @@ int** convert_map(const int src[MAP_SIZE][MAP_SIZE], int target) {
     }
     return map;
 }
-int** convert_map(int** src, int target) {
+int** map_convert(int** src, int target) {
     int** map = map_init(EMPTY);
     for (int i = MAP_START; i < MAP_SIZE; i++) {
         for (int j = MAP_START; j < MAP_SIZE; j++) {
@@ -519,7 +518,7 @@ static bool isReverse(const std::vector<int> path, int move) {
 }
 
 //计算地图中剩余目标个数
-static int target_num(int** map) {
+static int targetNum(int** map) {
     int num = 0;
     for (int i = MAP_START; i < MAP_SIZE; i++) {
         for (int j = MAP_START; j < MAP_SIZE; j++) {
@@ -536,17 +535,14 @@ bloom_filter* visited = nullptr;
 //记录搜索开始时间
 chrono::steady_clock::time_point startTime;
 
-
-
 //A*搜索主逻辑
 //节点扩展计数器
 static int node_num_a_star = 0;
 //优先队列,按f值排序
 std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
-
 static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
-    visited->insert(compress(startGrid));
-    // 初始启发值
+    visited->insert(map_compress(startGrid));
+    //初始启发值
     int h0 = heuristic(startGrid);
     pq.push(CubeMap(startGrid, 0, h0, {}, NULL));
     //记录开始时间
@@ -555,10 +551,6 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
         //取出当前f值最小的状态
         CubeMap curr = pq.top();
         pq.pop();
-        //计算过多剪枝 防止内存问题
-        /*if (nodesExpanded >= 1000000) {
-            return {};
-        }*/
         if (node_num_a_star++ % 100000 == 0) {
             auto now = chrono::steady_clock::now();
             auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
@@ -593,7 +585,7 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 //生成左移后的地图
                 int leftMap[MAP_SIZE][MAP_SIZE];
                 moveRowLeft(curr.map, i, leftMap);
-                uint64_t keyLeft = compress(leftMap);
+                uint64_t keyLeft = map_compress(leftMap);
                 //没有计算左移后的地图,且不是上一步的逆操作
                 if (!visited->contains(keyLeft) && !isReverse(curr.opPath, op)) {
                     visited->insert(keyLeft);
@@ -605,7 +597,7 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int op = ((i - 3) << 2) | OP_RIGHT;
                 int rightMap[MAP_SIZE][MAP_SIZE];
                 moveRowRight(curr.map, i, rightMap);
-                uint64_t keyRight = compress(rightMap);
+                uint64_t keyRight = map_compress(rightMap);
                 if (!visited->contains(keyRight) && !isReverse(curr.opPath, op)) {
                     visited->insert(keyRight);
                     pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), curr.opPath, op));
@@ -619,7 +611,7 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int op = ((j - 3) << 2) | OP_UP;
                 int upMap[MAP_SIZE][MAP_SIZE];
                 moveColUp(curr.map, j, upMap);
-                uint64_t keyUp = compress(upMap);
+                uint64_t keyUp = map_compress(upMap);
                 if (!visited->contains(keyUp) && !isReverse(curr.opPath, op)) {
                     visited->insert(keyUp);
                     pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), curr.opPath, op));
@@ -630,7 +622,7 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int op = ((j - 3) << 2) | OP_DOWN;
                 int downMap[MAP_SIZE][MAP_SIZE];
                 moveColDown(curr.map, j, downMap);
-                uint64_t keyDown = compress(downMap);
+                uint64_t keyDown = map_compress(downMap);
                 if (!visited->contains(keyDown) && !isReverse(curr.opPath, op)) {
                     visited->insert(keyDown);
                     pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), curr.opPath, op));
@@ -674,10 +666,10 @@ bool dfs(int** map, int step) {
     if (step >= MAX_DEPTH) {
         return false;
     }
-    if (target_num(map) < 9) {
+    if (targetNum(map) < 9) {
         return false;
     }
-    uint64_t key = compress(map);
+    uint64_t key = map_compress(map);
     if (visited->contains(key)) {
         return false;
     }
@@ -752,7 +744,7 @@ static CubeMap main_a_star(int** map) {
     int calcMap[MAP_SIZE][MAP_SIZE];
     intss2array(map, calcMap);
     std::cout << "开始计算" << std::endl;
-    std::cout << compress(calcMap) << std::endl;
+    std::cout << map_compress(calcMap) << std::endl;
     map_print(calcMap);
     std::cout << std::endl;
     CubeMap result = a_star(calcMap);
@@ -771,7 +763,7 @@ static CubeMap main_a_star(int** map) {
 //dfs求解
 static bool main_dfs(int** calcMap) {
     std::cout << "开始计算" << std::endl;
-    std::cout << compress(calcMap) << std::endl;
+    std::cout << map_compress(calcMap) << std::endl;
     map_print(calcMap);
     std::cout << std::endl;
     dfs(calcMap, 0);
@@ -817,7 +809,7 @@ void cube_maze_main() {
         {9, 9, 9, 3, 4, 4, 9, 9, 9},
         {9, 9, 9, 5, 6, 6, 9, 9, 9}
     };*/
-    int** map = random_map();
+    int** map = map_random();
     //deCompress(1547278747744, map);
     map_print(map);
     int calPathNum = 0;
@@ -825,7 +817,7 @@ void cube_maze_main() {
     bool optimal = false;
     auto startTime = chrono::steady_clock::now();
     for (int i = 2; i <= 6; i++) {
-        int** calcMap = convert_map(map, i);
+        int** calcMap = map_convert(map, i);
         /*CubeMap result = main_a_star(calcMap);
         if (result.step > 0) {
             break;
