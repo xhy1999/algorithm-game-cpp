@@ -742,6 +742,48 @@ bool dfs(int** map, int step) {
     return false;
 }
 
+//A*求解
+static CubeMap main_a_star(int** map) {
+    std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
+    std::vector<CubeMap> baseVec;
+    baseVec.reserve(100000);
+    std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq(
+        std::greater<CubeMap>(), std::move(baseVec));
+    int calcMap[MAP_SIZE][MAP_SIZE];
+    intss2array(map, calcMap);
+    std::cout << "开始计算" << std::endl;
+    std::cout << compress(calcMap) << std::endl;
+    map_print(calcMap);
+    std::cout << std::endl;
+    CubeMap result = a_star(calcMap);
+    cout << "计算路径: " << node_num_a_star << endl;
+    if (result.step > 0) {
+        cout << "有解!!!!!!!!!" << endl;
+        std::vector<int> res;
+        for (int i = 0; i < result.step; i++) {
+            res.push_back(result.opPath[i]);
+        }
+        result_main.push_back(res);
+    }
+    return result;
+}
+
+//dfs求解
+static bool main_dfs(int** calcMap) {
+    std::cout << "开始计算" << std::endl;
+    std::cout << compress(calcMap) << std::endl;
+    map_print(calcMap);
+    std::cout << std::endl;
+    dfs(calcMap, 0);
+    cout << "计算路径:" << node_num_dfs << endl;
+    if (!result_main.empty()) {
+        cout << "有解!!!!!!!!!" << result_main.size() << endl;
+        return true;
+    }
+    return false;
+}
+
+
 void cube_maze_main() {
     bloom_parameters parameters;
     parameters.projected_element_count = 10000000;
@@ -783,44 +825,14 @@ void cube_maze_main() {
     bool optimal = false;
     auto startTime = chrono::steady_clock::now();
     for (int i = 2; i <= 6; i++) {
-        //A*求解
-        std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
-        std::vector<CubeMap> baseVec;
-        baseVec.reserve(100000);
-        std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq(
-            std::greater<CubeMap>(), std::move(baseVec));
-        int mmm[MAP_SIZE][MAP_SIZE];
-        intss2array(map, mmm);
-        int calcMap[MAP_SIZE][MAP_SIZE];
-        convert_map(mmm, calcMap, i);
-        std::cout << "开始计算" << std::endl;
-        std::cout << compress(calcMap) << std::endl;
-        map_print(calcMap);
-        std::cout << std::endl;
-        CubeMap result = a_star(calcMap);
+        int** calcMap = convert_map(map, i);
+        /*CubeMap result = main_a_star(calcMap);
         if (result.step > 0) {
-            cout << "有解!!!!!!!!!" << endl;
-            std::vector<int> res;
-            for (int i = 0; i < result.step; i++) {
-                res.push_back(result.opPath[i]);
-            }
-            result_main.push_back(res);
+            break;
+        }*/
+        if (main_dfs(calcMap)) {
             break;
         }
-        cout << "计算路径: " << node_num_a_star << endl;
-
-        //dfs求解
-        //int** calcMap = convert_map(map, i);
-        //std::cout << "开始计算" << std::endl;
-        //std::cout << compress(calcMap) << std::endl;
-        //map_print(calcMap);
-        //std::cout << std::endl;
-        //dfs(calcMap, 0);
-        //if (!result_main.empty()) {
-        //    cout << "有解!!!!!!!!!" << result_main.size() << endl;
-        //    break;
-        //}
-        //cout << "计算路径: " << node_num_dfs << endl;
     }
     auto endTime = chrono::steady_clock::now();
     if (!result_main.empty()) {
