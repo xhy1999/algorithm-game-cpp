@@ -531,7 +531,7 @@ static int targetNum(int** map) {
 }
 
 //用于存储已访问状态的压缩序列化字符串
-bloom_filter* visited = nullptr;
+std::unordered_set<uint64_t> visited;
 //记录搜索开始时间
 chrono::steady_clock::time_point startTime;
 
@@ -541,7 +541,7 @@ static int node_num_a_star = 0;
 //优先队列,按f值排序
 std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
 static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
-    visited->insert(map_compress(startGrid));
+    visited.insert(map_compress(startGrid));
     //初始启发值
     int h0 = heuristic(startGrid);
     pq.push(CubeMap(startGrid, 0, h0, {}, NULL));
@@ -587,8 +587,7 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 moveRowLeft(curr.map, i, leftMap);
                 uint64_t keyLeft = map_compress(leftMap);
                 //没有计算左移后的地图,且不是上一步的逆操作
-                if (!visited->contains(keyLeft) && !isReverse(curr.opPath, op)) {
-                    visited->insert(keyLeft);
+                if (visited.insert(keyLeft).second && !isReverse(curr.opPath, op)) {
                     pq.push(CubeMap(leftMap, curr.step + 1, heuristic(leftMap), curr.opPath, op));
                 }
             }
@@ -598,8 +597,7 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int rightMap[MAP_SIZE][MAP_SIZE];
                 moveRowRight(curr.map, i, rightMap);
                 uint64_t keyRight = map_compress(rightMap);
-                if (!visited->contains(keyRight) && !isReverse(curr.opPath, op)) {
-                    visited->insert(keyRight);
+                if (visited.insert(keyRight).second && !isReverse(curr.opPath, op)) {
                     pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), curr.opPath, op));
                 }
             }
@@ -612,8 +610,7 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int upMap[MAP_SIZE][MAP_SIZE];
                 moveColUp(curr.map, j, upMap);
                 uint64_t keyUp = map_compress(upMap);
-                if (!visited->contains(keyUp) && !isReverse(curr.opPath, op)) {
-                    visited->insert(keyUp);
+                if (visited.insert(keyUp).second && !isReverse(curr.opPath, op)) {
                     pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), curr.opPath, op));
                 }
             }
@@ -623,8 +620,7 @@ static CubeMap a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
                 int downMap[MAP_SIZE][MAP_SIZE];
                 moveColDown(curr.map, j, downMap);
                 uint64_t keyDown = map_compress(downMap);
-                if (!visited->contains(keyDown) && !isReverse(curr.opPath, op)) {
-                    visited->insert(keyDown);
+                if (visited.insert(keyDown).second && !isReverse(curr.opPath, op)) {
                     pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), curr.opPath, op));
                 }
             }
@@ -670,10 +666,9 @@ bool dfs(int** map, int step) {
         return false;
     }
     uint64_t key = map_compress(map);
-    if (visited->contains(key)) {
+    if (!visited.insert(key).second) {
         return false;
     }
-    visited->insert(key);
     for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
         //左移
         if (canRowLeft(map, i)) {
@@ -777,25 +772,25 @@ static bool main_dfs(int** calcMap) {
 
 
 void cube_maze_main() {
-    bloom_parameters parameters;
-    parameters.projected_element_count = 10000000;
-    parameters.false_positive_probability = 0.01;
-    parameters.random_seed = 0xA5A5A5A5;
-    if (!parameters) {
-        std::cerr << "Invalid bloom filter parameters!" << std::endl;
-        return;
-    }
-    parameters.compute_optimal_parameters();
-    //释放之前的指针防止内存泄漏
-    if (visited) {
-        delete visited;
-        visited = nullptr;
-    }
-    visited = new bloom_filter(parameters);
-    if (!visited) {
-        std::cerr << "参数配置错误" << std::endl;
-        return;
-    }
+    //bloom_parameters parameters;
+    //parameters.projected_element_count = 10000000;
+    //parameters.false_positive_probability = 0.01;
+    //parameters.random_seed = 0xA5A5A5A5;
+    //if (!parameters) {
+    //    std::cerr << "Invalid bloom filter parameters!" << std::endl;
+    //    return;
+    //}
+    //parameters.compute_optimal_parameters();
+    ////释放之前的指针防止内存泄漏
+    //if (visited) {
+    //    delete visited;
+    //    visited = nullptr;
+    //}
+    //visited = new bloom_filter(parameters);
+    //if (!visited) {
+    //    std::cerr << "参数配置错误" << std::endl;
+    //    return;
+    //}
 
     //int map[MAP_SIZE][MAP_SIZE];
     /*int map[MAP_SIZE][MAP_SIZE] = {
