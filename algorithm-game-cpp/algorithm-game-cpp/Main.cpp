@@ -73,57 +73,57 @@ long long get_time() {
 //    }
 //}
 //
-//int main() {
-//    //BYTE* pData = NULL;
-//    //DWORD dwDataLength = 0;
-//    //DWORD i = 0;
-//    BYTE* pHashData = NULL;
-//    DWORD dwHashDataLength = 0;
-//    //文件不存在b0 42 fc 14 fb 93 a4 99 78 b8
-//    get_file_sha256_hash("C:\\Users\\Administrator\\Desktop\\2023.5.7A\\FlashHelper.exe", &pHashData, &dwHashDataLength);
-//    struct stat info;
-//    if (stat("C:\\Users\\Administrator\\Desktop\\2023.5.7A\\FlashHelper.exe", &info) == 0) {  // does not exist
-//        printf("exist\n");
-//    }
-//    //GetFileData("C:\\Projects\\C#\\bxxt\\bxxt_client\\FlashHelper\\bin\\x64\\Release\\FlashHelper.exe", &pData, &dwDataLength);
-//    //CalculateHash(pData, dwDataLength, CALG_SHA_256, &pHashData, &dwHashDataLength);
-//    //printf("SHA256[%ld]\n", dwHashDataLength);
-//    for (int i = 0; i < dwHashDataLength; i++) {
-//        cout << int_2_hex_string((int)pHashData[i], 2);
-//    }
-//    cout << endl;
-//    cout << int_2_hex_string((int)pHashData[1], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[3], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[5], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[7], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[9], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 10], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 8], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 6], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 4], 2) << endl;
-//    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 2], 2) << endl;
-//    
-//    printf("\n\n");
-//    string_2_char("123456");
-//
-//    system("pause");
-//    long long startTime = get_time();
-//    std::cout << std::to_string(startTime) << std::endl;
-//    char var1[] = "2,6b,40,20,0,4,1";
-//    char* var2 = new char[2048];
-//    one_line_main(var1, var2);
-//    std::cout << std::to_string(get_time() - startTime) << std::endl;
-//    system("pause");
-//}
-//
 int main() {
-    cube_maze_main();
-    /*long long startTime = get_time();
+    //BYTE* pData = NULL;
+    //DWORD dwDataLength = 0;
+    //DWORD i = 0;
+    BYTE* pHashData = NULL;
+    DWORD dwHashDataLength = 0;
+    //文件不存在b0 42 fc 14 fb 93 a4 99 78 b8
+    get_file_sha256_hash("C:\\Users\\Administrator\\Desktop\\2025.9.24A\\FlashHelper.exe", &pHashData, &dwHashDataLength);
+    struct stat info;
+    if (stat("C:\\Users\\Administrator\\Desktop\\2025.9.24A\\FlashHelper.exe", &info) == 0) {
+        printf("文件存在!\n");
+    }
+    //GetFileData("C:\\Projects\\C#\\bxxt\\bxxt_client\\FlashHelper\\bin\\x64\\Release\\FlashHelper.exe", &pData, &dwDataLength);
+    //CalculateHash(pData, dwDataLength, CALG_SHA_256, &pHashData, &dwHashDataLength);
+    //printf("SHA256[%ld]\n", dwHashDataLength);
+    for (int i = 0; i < dwHashDataLength; i++) {
+        cout << int_2_hex_string((int)pHashData[i], 2);
+    }
+    cout << endl;
+    //cout << int_2_hex_string((int)pHashData[1], 2) << endl;
+    //cout << int_2_hex_string((int)pHashData[3], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[5], 2) << endl;
+    //cout << int_2_hex_string((int)pHashData[7], 2) << endl;
+    //cout << int_2_hex_string((int)pHashData[9], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 10], 2) << endl;
+    //cout << int_2_hex_string((int)pHashData[dwHashDataLength - 8], 2) << endl;
+    //cout << int_2_hex_string((int)pHashData[dwHashDataLength - 6], 2) << endl;
+    //cout << int_2_hex_string((int)pHashData[dwHashDataLength - 4], 2) << endl;
+    cout << int_2_hex_string((int)pHashData[dwHashDataLength - 2], 2) << endl;
+    
+    /*printf("\n\n");
+    string_2_char("123456");
+
+    system("pause");
+    long long startTime = get_time();
     std::cout << std::to_string(startTime) << std::endl;
     char var1[] = "2,6b,40,20,0,4,1";
     char* var2 = new char[2048];
     one_line_main(var1, var2);
     std::cout << std::to_string(get_time() - startTime) << std::endl;
     system("pause");*/
-	return 1;
 }
+
+//int main() {
+//    cube_maze_main();
+//    /*long long startTime = get_time();
+//    std::cout << std::to_string(startTime) << std::endl;
+//    char var1[] = "2,6b,40,20,0,4,1";
+//    char* var2 = new char[2048];
+//    one_line_main(var1, var2);
+//    std::cout << std::to_string(get_time() - startTime) << std::endl;
+//    system("pause");*/
+//	return 1;
+//}
