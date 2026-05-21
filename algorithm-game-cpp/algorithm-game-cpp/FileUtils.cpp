@@ -3,14 +3,14 @@
 
 using namespace std;
 
-BOOL get_file_data(const char* pszFilePath, BYTE** ppFileData, DWORD* pdwFileDataLength) {
+BOOL get_file_data(const wchar_t* pszFilePath, BYTE** ppFileData, DWORD* pdwFileDataLength) {
     BOOL bRet = TRUE;
     BYTE* pFileData = NULL;
     DWORD dwFileDataLength = 0;
     HANDLE hFile = NULL;
     DWORD dwTemp = 0;
     do {
-        hFile = ::CreateFile(pszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
+        hFile = ::CreateFileW(pszFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
         if (INVALID_HANDLE_VALUE == hFile) {
             bRet = FALSE;
             //cout << "FALSE1" << endl;
@@ -102,7 +102,7 @@ BOOL calculate_hash(BYTE* pData, DWORD dwDataLength, ALG_ID algHashType, BYTE** 
     return bRet;
 }
 
-BOOL get_file_sha256_hash(const char* pszFilePath, BYTE** pHashData, DWORD* dwHashDataLength) {
+BOOL get_file_sha256_hash(const wchar_t* pszFilePath, BYTE** pHashData, DWORD* dwHashDataLength) {
     BYTE* pData = NULL;
     DWORD dwDataLength = 0;
     get_file_data(pszFilePath, &pData, &dwDataLength);
@@ -113,8 +113,8 @@ BOOL get_file_sha256_hash(const char* pszFilePath, BYTE** pHashData, DWORD* dwHa
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
-string get_dll_path() {
-    TCHAR path[MAX_PATH] = { 0 };
-    GetModuleFileName((HINSTANCE)&__ImageBase, path, _countof(path));
-    return (string)path;
+std::wstring get_dll_path() {
+    wchar_t path[MAX_PATH] = { 0 };
+    GetModuleFileNameW((HINSTANCE)&__ImageBase, path, MAX_PATH);
+    return path;
 }
