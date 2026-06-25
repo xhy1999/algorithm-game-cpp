@@ -610,139 +610,10 @@ int targetNum(int map[MAP_SIZE][MAP_SIZE]) {
 }
 
 //用于存储已访问状态的压缩序列化字符串
-std::unordered_set<uint64_t> visited;
+//std::unordered_set<uint64_t> visited;
+bloom_filter* visited = nullptr;
 //记录搜索开始时间
 chrono::steady_clock::time_point startTime;
-
-//A*搜索主逻辑
-//节点扩展计数器
-static int node_num_a_star = 0;
-//优先队列,按f值排序
-//std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq;
-
-struct CompareCubeMap {
-    bool operator()(const CubeMap* a, const CubeMap* b) const {
-        return a->f() > b->f();
-    }
-};
-
-std::priority_queue<CubeMap*, std::vector<CubeMap*>, CompareCubeMap> pq;
-
-std::vector<CubeMap*> allNodes;
-
-static CubeMap* createNode(uint64_t state, int step, int h, CubeMap* parent, int op) {
-    CubeMap* node = new CubeMap(state, step, h, parent, op);
-    allNodes.push_back(node);
-    return node;
-}
-
-static CubeMap* a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
-    visited.insert(map_compress(startGrid, true));
-    //初始启发值
-    int h0 = heuristic(startGrid);
-    //pq.push(CubeMap(startGrid, 0, h0, {}, NULL));
-    CubeMap* node = createNode(map_compress(startGrid, true), 0, h0, nullptr, -1);
-    pq.push(node);
-    //记录开始时间
-    startTime = chrono::steady_clock::now();
-    while (!pq.empty()) {
-        //取出当前f值最小的状态
-        CubeMap* curr = pq.top();
-        pq.pop();
-        if (node_num_a_star++ % 100000 == 0) {
-            auto now = chrono::steady_clock::now();
-            auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
-            cout << "已计算" << node_num_a_star << "条路径,pq:"<< pq.size()<<",耗时:" << duration << "ms" << endl;
-        }
-        //如果已达目标状态，返回路径
-        if (curr->h == 0) {
-            //curr.release();
-            return curr;
-        }
-        //步数下限剪枝
-        if (curr->step + curr->h > MAX_DEPTH) {
-            //curr.release();
-            continue;
-        }
-        //超过最大步数
-        if (curr->step >= MAX_DEPTH) {
-            //curr.release();
-            continue;
-        }
-        int tmpMap[MAP_SIZE][MAP_SIZE];
-        map_decompress(curr->state, tmpMap);
-        //判断总目标是否足够
-        //if (curr->targetNum() < 9) {
-        if (targetNum(tmpMap) < 9) {
-            //curr.release();
-            continue;
-        }
-        //尝试对第3~5行进行左右移动
-        for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
-            //左移
-            //if (canRowLeft(curr->map, i)) {
-            if (canRowLeft(tmpMap, i)) {
-                //生成操作
-                int op = ((i - 3) << 2) | OP_LEFT;
-                //生成左移后的地图
-                int leftMap[MAP_SIZE][MAP_SIZE];
-                //moveRowLeft(curr->map, i, leftMap);
-                moveRowLeft(tmpMap, i, leftMap);
-                uint64_t keyLeft = map_compress(leftMap, true);
-                //没有计算左移后的地图,且不是上一步的逆操作
-                if (visited.insert(keyLeft).second && !isReverse(curr, op)) {
-                    //pq.push(CubeMap(leftMap, curr.step + 1, heuristic(leftMap), curr.opPath, op));
-                    pq.push(createNode(keyLeft, curr->step + 1, heuristic(leftMap), curr, op));
-                }
-            }
-            //右移
-            //if (canRowRight(curr->map, i)) {
-            if (canRowRight(tmpMap, i)) {
-                int op = ((i - 3) << 2) | OP_RIGHT;
-                int rightMap[MAP_SIZE][MAP_SIZE];
-                //moveRowRight(curr->map, i, rightMap);
-                moveRowRight(tmpMap, i, rightMap);
-                uint64_t keyRight = map_compress(rightMap, true);
-                if (visited.insert(keyRight).second && !isReverse(curr, op)) {
-                    //pq.push(CubeMap(rightMap, curr.step + 1, heuristic(rightMap), curr.opPath, op));
-                    pq.push(createNode(keyRight, curr->step + 1, heuristic(rightMap), curr, op));
-                }
-            }
-        }
-        //尝试对第3~5列进行上下移动
-        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
-            //上移
-            //if (canColUp(curr->map, j)) {
-            if (canColUp(tmpMap, j)) {
-                int op = ((j - 3) << 2) | OP_UP;
-                int upMap[MAP_SIZE][MAP_SIZE];
-                //moveColUp(curr->map, j, upMap);
-                moveColUp(tmpMap, j, upMap);
-                uint64_t keyUp = map_compress(upMap, true);
-                if (visited.insert(keyUp).second && !isReverse(curr, op)) {
-                    //pq.push(CubeMap(upMap, curr.step + 1, heuristic(upMap), curr.opPath, op));
-                    pq.push(createNode(keyUp, curr->step + 1, heuristic(upMap), curr, op));
-                }
-            }
-            //下移
-            //if (canColDown(curr->map, j)) {
-            if (canColDown(tmpMap, j)) {
-                int op = ((j - 3) << 2) | OP_DOWN;
-                int downMap[MAP_SIZE][MAP_SIZE];
-                //moveColDown(curr->map, j, downMap);
-                moveColDown(tmpMap, j, downMap);
-                uint64_t keyDown = map_compress(downMap, true);
-                if (visited.insert(keyDown).second && !isReverse(curr, op)) {
-                    //pq.push(CubeMap(downMap, curr.step + 1, heuristic(downMap), curr.opPath, op));
-                    pq.push(createNode(keyDown, curr->step + 1, heuristic(downMap), curr, op));
-                }
-            }
-        }
-        //curr.release();
-    }
-    //未找到解
-    return nullptr;
-}
 
 //dfs主逻辑
 std::vector<std::vector<int>> result_main;
@@ -779,7 +650,10 @@ bool dfs(int** map, int step) {
         return false;
     }
     uint64_t key = map_compress(map);
-    if (!visited.insert(key).second) {
+    /*if (!visited.insert(key).second) {
+        return false;
+    }*/
+    if (visited->contains(key)) {
         return false;
     }
     for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
@@ -842,6 +716,126 @@ bool dfs(int** map, int step) {
     return false;
 }
 
+//A*搜索主逻辑
+//节点扩展计数器
+static int node_num_a_star = 0;
+//优先队列,按f值排序
+struct CompareCubeMap {
+    bool operator()(const CubeMap* a, const CubeMap* b) const {
+        return a->f() > b->f();
+    }
+};
+std::priority_queue<CubeMap*, std::vector<CubeMap*>, CompareCubeMap> pq;
+//所有节点
+std::vector<CubeMap*> allNodes;
+
+static CubeMap* createNode(uint64_t state, int step, int h, CubeMap* parent, int op) {
+    CubeMap* node = new CubeMap(state, step, h, parent, op);
+    allNodes.push_back(node);
+    return node;
+}
+
+static CubeMap* a_star(int startGrid[MAP_SIZE][MAP_SIZE]) {
+    visited->insert(map_compress(startGrid, true));
+    //初始启发值
+    int h0 = heuristic(startGrid);
+    CubeMap* node = createNode(map_compress(startGrid, true), 0, h0, nullptr, -1);
+    pq.push(node);
+    //记录开始时间
+    startTime = chrono::steady_clock::now();
+    while (!pq.empty()) {
+        //取出当前f值最小的状态
+        CubeMap* curr = pq.top();
+        pq.pop();
+        if (node_num_a_star++ % 100000 == 0) {
+            auto now = chrono::steady_clock::now();
+            auto duration = chrono::duration_cast<chrono::milliseconds>(now - startTime).count();
+            cout << "已计算" << node_num_a_star << "条路径,pq:"<< pq.size()<<",耗时:" << duration << "ms" << endl;
+        }
+        //如果已达目标状态，返回路径
+        if (curr->h == 0) {
+            return curr;
+        }
+        //步数下限剪枝
+        if (curr->step + curr->h > MAX_DEPTH) {
+            continue;
+        }
+        //超过最大步数
+        if (curr->step >= MAX_DEPTH) {
+            continue;
+        }
+        int tmpMap[MAP_SIZE][MAP_SIZE];
+        map_decompress(curr->state, tmpMap);
+        //判断总目标是否足够
+        if (targetNum(tmpMap) < 9) {
+            continue;
+        }
+        //尝试对第3~5行进行左右移动
+        for (int i = MAP_INDEX_START; i <= MAP_INDEX_END; i++) {
+            //左移
+            if (canRowLeft(tmpMap, i)) {
+                //生成操作
+                int op = ((i - 3) << 2) | OP_LEFT;
+                //生成左移后的地图
+                int leftMap[MAP_SIZE][MAP_SIZE];
+                moveRowLeft(tmpMap, i, leftMap);
+                uint64_t keyLeft = map_compress(leftMap, true);
+                //没有计算左移后的地图,且不是上一步的逆操作
+                if (!visited->contains(keyLeft)) {
+                    visited->insert(keyLeft);
+                    if (!isReverse(curr, op)) {
+                        pq.push(createNode(keyLeft, curr->step + 1, heuristic(leftMap), curr, op));
+                    }
+                }
+            }
+            //右移
+            if (canRowRight(tmpMap, i)) {
+                int op = ((i - 3) << 2) | OP_RIGHT;
+                int rightMap[MAP_SIZE][MAP_SIZE];
+                moveRowRight(tmpMap, i, rightMap);
+                uint64_t keyRight = map_compress(rightMap, true);
+                if (!visited->contains(keyRight)) {
+                    visited->insert(keyRight);
+                    if (!isReverse(curr, op)) {
+                        pq.push(createNode(keyRight, curr->step + 1, heuristic(rightMap), curr, op));
+                    }
+                }
+            }
+        }
+        //尝试对第3~5列进行上下移动
+        for (int j = MAP_INDEX_START; j <= MAP_INDEX_END; j++) {
+            //上移
+            if (canColUp(tmpMap, j)) {
+                int op = ((j - 3) << 2) | OP_UP;
+                int upMap[MAP_SIZE][MAP_SIZE];
+                moveColUp(tmpMap, j, upMap);
+                uint64_t keyUp = map_compress(upMap, true);
+                if (!visited->contains(keyUp)) {
+                    visited->insert(keyUp);
+                    if (!isReverse(curr, op)) {
+                        pq.push(createNode(keyUp, curr->step + 1, heuristic(upMap), curr, op));
+                    }
+                }
+            }
+            //下移
+            if (canColDown(tmpMap, j)) {
+                int op = ((j - 3) << 2) | OP_DOWN;
+                int downMap[MAP_SIZE][MAP_SIZE];
+                moveColDown(tmpMap, j, downMap);
+                uint64_t keyDown = map_compress(downMap, true);
+                if (!visited->contains(keyDown)) {
+                    visited->insert(keyDown);
+                    if (!isReverse(curr, op)) {
+                        pq.push(createNode(keyDown, curr->step + 1, heuristic(downMap), curr, op));
+                    }
+                }
+            }
+        }
+    }
+    //未找到解
+    return nullptr;
+}
+
 std::vector<int> buildPath(CubeMap* node) {
     std::vector<int> path;
     while (node && node->parent) {
@@ -852,19 +846,35 @@ std::vector<int> buildPath(CubeMap* node) {
     return path;
 }
 
+//初始化A*参数
+void init_a_star() {
+    //清空优先队列 pq
+    std::priority_queue<CubeMap*, std::vector<CubeMap*>, CompareCubeMap>().swap(pq);
+    //清理 allNodes
+    for (CubeMap* node : allNodes) {
+        delete node;
+    }
+    allNodes.clear();
+    //清理 Bloom Filter
+    if (visited) {
+        delete visited;
+        visited = nullptr;
+    }
+    //初始化 Bloom Filter
+    bloom_parameters parameters;
+    //预估节点数
+    parameters.projected_element_count = 10000000;
+    //1%假阳性
+    parameters.false_positive_probability = 0.01;
+    parameters.random_seed = 0xA5A5A5A5;
+    parameters.compute_optimal_parameters();
+    visited = new bloom_filter(parameters);
+}
+
 //A*求解
-static CubeMap* main_a_star(int** map) {
-    //std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>>().swap(pq);
-    //std::vector<CubeMap> baseVec;
-    //baseVec.reserve(100000);
-    //std::priority_queue<CubeMap, std::vector<CubeMap>, std::greater<CubeMap>> pq(
-    //    std::greater<CubeMap>(), std::move(baseVec));
-
-    decltype(pq)().swap(pq);
-    std::vector<CubeMap*> baseVec;
-    baseVec.reserve(100000);
-    std::priority_queue<CubeMap*, std::vector<CubeMap*>, CompareCubeMap> pq(CompareCubeMap(), std::move(baseVec));
-
+static std::vector<int> main_a_star(int** map) {
+    init_a_star();
+    //计算逻辑
     int calcMap[MAP_SIZE][MAP_SIZE];
     intss2array(map, calcMap);
     std::cout << "开始计算" << std::endl;
@@ -912,26 +922,6 @@ static bool main_dfs(int** calcMap) {
 
 
 void cube_maze_main() {
-    //bloom_parameters parameters;
-    //parameters.projected_element_count = 10000000;
-    //parameters.false_positive_probability = 0.01;
-    //parameters.random_seed = 0xA5A5A5A5;
-    //if (!parameters) {
-    //    std::cerr << "Invalid bloom filter parameters!" << std::endl;
-    //    return;
-    //}
-    //parameters.compute_optimal_parameters();
-    ////释放之前的指针防止内存泄漏
-    //if (visited) {
-    //    delete visited;
-    //    visited = nullptr;
-    //}
-    //visited = new bloom_filter(parameters);
-    //if (!visited) {
-    //    std::cerr << "参数配置错误" << std::endl;
-    //    return;
-    //}
-
     //int map[MAP_SIZE][MAP_SIZE];
     /*int map[MAP_SIZE][MAP_SIZE] = {
         {9, 9, 9, 4, 6, 6, 9, 9, 9},
@@ -953,28 +943,22 @@ void cube_maze_main() {
     auto startTime = chrono::steady_clock::now();
     for (int i = 2; i <= 6; i++) {
         int** calcMap = map_convert(map, i);
-
         int m[MAP_SIZE][MAP_SIZE];
         //map_decompress(862224516186112, m);
-        map_decompress(18032066128642048, m);
+        //map_decompress(18032066128642048, m);
+        map_decompress(844459477630976, m);
         map_print(array2intss(m));
         CubeMap* result = main_a_star(array2intss(m));
-
-        //CubeMap result = main_a_star(calcMap);
-        if (result->step > 0) {
+        if (result != nullptr) {
+            //有解
+            init_a_star();
             break;
         }
+        break;
         //if (main_dfs(calcMap)) {
         //    break;
         //}
     }
-
-
-    for (CubeMap* node : allNodes) {
-        delete node;
-    }
-    allNodes.clear();
-
     auto endTime = chrono::steady_clock::now();
     if (!result_main.empty()) {
         cout << "共有" << result_main.size() << "种解法" << endl;
